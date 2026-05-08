@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<!-- saved from url=(0047)file:///C:/Users/LILI/Downloads/haklyon-v8.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HAKLYON — CORTEX VISION</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+:root{
+  --c1:#00ffe7;--c2:#0af;--c3:#ff6a00;--c4:#ffe600;
+  --plasma:#ff2d6b;--void:#03060a;
+  --border:rgba(0,255,231,0.18);--border2:rgba(0,170,255,0.12);
+  --text:#8ecfcf;--dim:rgba(140,207,207,0.4);--panel:rgba(0,15,28,0.92);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--void);font-family:'Share Tech Mono',monospace;color:var(--text);overflow:hidden;user-select:none;}
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 120% 80% at 50% -20%,rgba(0,100,180,0.1) 0%,transparent 60%),var(--void);}
+#bg::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,255,231,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,231,0.04) 1px,transparent 1px);background-size:60px 60px;animation:gs 20s linear infinite;}
+@keyframes gs{from{background-position:0 0}to{background-position:60px 60px}}
+#scanline{position:fixed;top:0;left:0;right:0;height:2px;z-index:9999;background:linear-gradient(90deg,transparent,rgba(0,255,231,0.3),transparent);animation:scan 5s linear infinite;pointer-events:none;}
+@keyframes scan{0%{top:-2px}100%{top:100vh}}
+#app{position:relative;z-index:1;width:100vw;height:100vh;display:flex;flex-direction:column;}
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:48px;min-height:48px;background:rgba(0,6,16,0.98);border-bottom:1px solid var(--border);flex-shrink:0;position:relative;}
+#topbar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--c1),var(--c2),var(--c1),transparent);opacity:0.6;}
+.brand{display:flex;align-items:center;gap:8px;}
+.brand svg{filter:drop-shadow(0 0 8px var(--c1));}
+.brand-name{font-family:'Orbitron',monospace;font-size:15px;font-weight:900;letter-spacing:5px;color:var(--c1);text-shadow:0 0 20px var(--c1);}
+.brand-sub{font-size:6px;letter-spacing:3px;color:var(--dim);}
+#sysTime{font-family:'Orbitron',monospace;color:var(--c1);font-size:12px;letter-spacing:2px;}
+#statusBar{display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 14px;background:rgba(0,4,12,0.98);border-bottom:1px solid var(--border2);flex-shrink:0;font-size:10px;letter-spacing:1px;}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot.g{background:#00ff88;box-shadow:0 0 8px #00ff88;animation:bp 2s infinite;}
+.dot.r{background:var(--plasma);box-shadow:0 0 8px var(--plasma);}
+.dot.y{background:var(--c4);box-shadow:0 0 8px var(--c4);animation:bp 1s infinite;}
+@keyframes bp{0%,100%{opacity:1}50%{opacity:0.2}}
+#tabs{display:flex;background:rgba(0,4,12,0.98);border-bottom:1px solid var(--border2);flex-shrink:0;}
+.tab{flex:1;padding:9px 4px;background:transparent;border:none;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;border-right:1px solid var(--border2);text-transform:uppercase;position:relative;}
+.tab:last-child{border-right:none;}
+.tab::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--c1);transform:scaleX(0);transition:transform 0.3s;}
+.tab.active{color:var(--c1);background:rgba(0,255,231,0.03);}
+.tab.active::after{transform:scaleX(1);}
+.panel{display:none;flex:1;overflow:hidden;}
+.panel.active{display:flex;flex-direction:column;animation:fu 0.3s ease;}
+@keyframes fu{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#connectPanel{padding:14px;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.connect-card{background:linear-gradient(135deg,rgba(0,255,231,0.06),rgba(0,170,255,0.02));border:1px solid rgba(0,255,231,0.2);border-radius:4px;padding:18px;text-align:center;flex-shrink:0;}
+.connect-title{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:var(--c1);letter-spacing:4px;margin-bottom:4px;}
+.connect-sub{font-size:8px;color:var(--dim);letter-spacing:1px;margin-bottom:14px;line-height:1.9;}
+.room-input{width:100%;padding:14px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,231,0.25);border-radius:3px;color:var(--c1);font-family:'Orbitron',monospace;font-size:22px;font-weight:700;letter-spacing:8px;text-align:center;outline:none;text-transform:uppercase;margin-bottom:12px;-webkit-appearance:none;}
+.room-input::placeholder{color:rgba(0,255,231,0.15);font-size:13px;letter-spacing:3px;}
+.room-input:focus{border-color:rgba(0,255,231,0.5);}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.btn{display:block;width:100%;padding:10px;border:none;border-radius:3px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.18s;margin-bottom:6px;-webkit-tap-highlight-color:transparent;}
+.btn:last-child{margin-bottom:0;}
+.btn:active{transform:scale(0.96);}
+.btn-c{background:rgba(0,255,231,0.08);border:1px solid rgba(0,255,231,0.3);color:var(--c1);}
+.btn-o{background:rgba(255,106,0,0.1);border:1px solid rgba(255,106,0,0.3);color:var(--c3);}
+.btn-r{background:rgba(255,45,107,0.08);border:1px solid rgba(255,45,107,0.25);color:var(--plasma);}
+.btn-g{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);color:#00ff88;}
+.btn-big{padding:16px;font-size:11px;}
+.info-card{background:var(--panel);border:1px solid var(--border2);border-radius:3px;padding:12px;flex-shrink:0;}
+.info-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:600;color:var(--c1);letter-spacing:3px;margin-bottom:8px;}
+.step{display:flex;align-items:flex-start;gap:10px;padding:7px;background:rgba(0,255,231,0.02);border:1px solid rgba(0,255,231,0.07);border-radius:3px;margin-bottom:5px;}
+.step:last-child{margin-bottom:0;}
+.step-n{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;color:var(--c1);opacity:0.35;flex-shrink:0;line-height:1.2;}
+.step-t{font-size:9px;color:var(--dim);line-height:1.7;}
+.step-t b{color:var(--text);}
+#sensorPanel{padding:10px;gap:8px;}
+.cam-wrap{position:relative;border:1px solid var(--border);border-radius:3px;overflow:hidden;background:#000;flex:1;min-height:0;}
+#localVideo{width:100%;height:100%;object-fit:cover;display:block;}
+.hc{position:absolute;width:20px;height:20px;border-color:rgba(0,255,231,0.6);border-style:solid;}
+.tl{top:8px;left:8px;border-width:2px 0 0 2px;}.tr{top:8px;right:8px;border-width:2px 2px 0 0;}
+.bl{bottom:8px;left:8px;border-width:0 0 2px 2px;}.br{bottom:8px;right:8px;border-width:0 2px 2px 0;}
+.cam-top{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--c1);letter-spacing:2px;white-space:nowrap;text-shadow:0 0 8px var(--c1);}
+#recB{position:absolute;top:10px;left:34px;display:none;align-items:center;gap:4px;font-size:8px;color:var(--plasma);}
+.cross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;pointer-events:none;opacity:0.2;}
+.cross::before,.cross::after{content:'';position:absolute;background:var(--c1);}
+.cross::before{top:50%;left:0;right:0;height:1px;transform:translateY(-50%);}
+.cross::after{left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);}
+#visionPanel{padding:0;}
+.vision-wrap{position:relative;background:#000;flex:1;min-height:0;overflow:hidden;}
+#remoteVideo{width:100%;height:100%;object-fit:cover;display:block;}
+#tfCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.sbeam{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,255,231,0.8),transparent);box-shadow:0 0 12px rgba(0,255,231,0.4);animation:bm 3s ease-in-out infinite;z-index:2;pointer-events:none;}
+@keyframes bm{0%{top:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{top:100%;opacity:0}}
+.vgt{position:absolute;top:0;left:0;right:0;height:65px;background:linear-gradient(180deg,rgba(0,3,10,0.92) 0%,transparent 100%);pointer-events:none;z-index:1;}
+.vgb{position:absolute;bottom:0;left:0;right:0;height:130px;background:linear-gradient(0deg,rgba(0,3,10,0.99) 0%,transparent 100%);pointer-events:none;z-index:1;}
+.vbrand{position:absolute;top:11px;left:12px;z-index:3;pointer-events:none;}
+.vbrand-n{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;letter-spacing:4px;color:var(--c1);text-shadow:0 0 14px var(--c1);}
+.vbrand-s{font-size:6px;letter-spacing:3px;color:var(--dim);}
+.vstats{position:absolute;top:11px;right:12px;text-align:right;z-index:3;pointer-events:none;font-size:8px;line-height:1.9;color:rgba(0,255,231,0.55);}
+.vc{position:absolute;width:22px;height:22px;border-color:rgba(0,255,231,0.35);border-style:solid;z-index:2;}
+.vbottom{position:absolute;bottom:0;left:0;right:0;padding:6px 12px 10px;z-index:3;pointer-events:none;display:flex;align-items:flex-end;gap:6px;}
+.det-panel{flex:1;min-width:0;}
+.det-title{font-size:7px;color:var(--dim);letter-spacing:2px;margin-bottom:3px;}
+.det-item{display:flex;align-items:center;gap:4px;margin-bottom:2px;animation:di 0.25s ease;}
+@keyframes di{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:none}}
+.det-bar{width:3px;height:13px;border-radius:1px;flex-shrink:0;}
+.det-lbl{font-size:11px;font-weight:bold;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.det-pct{font-size:9px;color:var(--dim);flex-shrink:0;}
+.det-ae{font-size:10px;font-weight:bold;color:var(--c3);flex-shrink:0;}
+.aether-box{text-align:center;flex-shrink:0;padding:0 8px;}
+.ae-lbl{font-size:6px;letter-spacing:3px;color:rgba(255,106,0,0.45);margin-bottom:1px;}
+.ae-num{font-family:'Orbitron',monospace;font-size:38px;font-weight:900;color:var(--c3);text-shadow:0 0 24px var(--c3),0 0 60px rgba(255,106,0,0.25);line-height:1;}
+.ae-unit{font-size:7px;color:rgba(255,106,0,0.35);letter-spacing:3px;}
+.stat-box{text-align:right;flex-shrink:0;}
+.sr{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-bottom:3px;}
+.sl{font-size:7px;color:var(--dim);}
+.sv{font-family:'Orbitron',monospace;font-size:12px;color:var(--c1);min-width:30px;text-align:right;}
+#noStream{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(0,3,10,0.97);z-index:10;}
+.no-icon{width:52px;height:52px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--dim);animation:rp 4s ease-in-out infinite;}
+@keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(0,255,231,0.08)}50%{box-shadow:0 0 0 14px rgba(0,255,231,0)}}
+.vbar{padding:7px 10px;flex-shrink:0;background:rgba(0,3,10,0.99);border-top:1px solid var(--border2);display:flex;gap:6px;}
+.vbar .btn{margin-bottom:0;flex:1;}
+.term{background:rgba(0,0,0,0.85);border:1px solid var(--border2);border-radius:2px;padding:6px;height:80px;overflow-y:auto;font-size:8px;line-height:1.7;flex-shrink:0;}
+.term::-webkit-scrollbar{width:2px;}
+.term::-webkit-scrollbar-thumb{background:var(--border);}
+.lg .t{color:rgba(140,207,207,0.18);margin-right:4px;}
+.lg .m{color:rgba(140,207,207,0.5);}
+.lg.ok .m{color:#00ff88;}
+.lg.err .m{color:var(--plasma);}
+.lg.info .m{color:var(--c1);}
+.lg.warn .m{color:var(--c4);}
+.lg.ae .m{color:var(--c3);}
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,3,10,0.96);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center;}
+#overlay.show{display:flex;}
+.spinner{width:44px;height:44px;border:2px solid var(--border);border-top-color:var(--c1);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ov-title{font-family:'Orbitron',monospace;font-size:12px;color:var(--c1);letter-spacing:4px;}
+.ov-step{font-size:11px;color:var(--c4);letter-spacing:1px;min-height:18px;}
+.ov-sub{font-size:9px;color:var(--dim);letter-spacing:1px;line-height:1.9;max-width:280px;}
+#pdfModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9000;align-items:center;justify-content:center;padding:16px;}
+#pdfModal.show{display:flex;}
+.pdf-box{background:rgba(0,10,22,0.98);border:1px solid var(--border);border-radius:4px;padding:18px;width:100%;max-width:360px;max-height:85vh;overflow-y:auto;text-align:center;}
+.pdf-title{font-family:'Orbitron',monospace;font-size:12px;color:var(--c1);letter-spacing:3px;margin-bottom:6px;}
+.pdf-preview{background:rgba(0,0,0,0.5);border:1px solid var(--border2);border-radius:3px;padding:8px;margin-bottom:10px;text-align:left;max-height:220px;overflow-y:auto;}
+.pdf-row{font-size:9px;padding:3px 0;border-bottom:1px solid rgba(0,255,231,0.05);display:flex;gap:8px;}
+.pdf-row:last-child{border-bottom:none;}
+#wakeNotice{position:fixed;bottom:0;left:0;right:0;padding:4px;text-align:center;font-size:6px;color:rgba(0,255,136,0.25);letter-spacing:2px;z-index:9998;pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="scanline"></div>
+<div id="wakeNotice">◈ HAKLYON CORTEX v8.0 — SCREEN LOCK DISABLED ◈</div>
+
+<div id="overlay">
+  <div class="spinner"></div>
+  <div class="ov-title">◈ ESTABLISHING LINK</div>
+  <div class="ov-step" id="ovStep">...</div>
+  <div class="ov-sub" id="ovSub"></div>
+  <button class="btn btn-r" onclick="doDisconnect()" style="margin-top:8px;width:160px;margin-bottom:0">✕ ZRUŠIŤ</button>
+</div>
+
+<div id="app">
+  <div id="topbar">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 32 32">
+        <polygon points="16,2 30,26 2,26" fill="none" stroke="#00ffe7" stroke-width="1.5"></polygon>
+        <polygon points="16,8 25,24 7,24" fill="none" stroke="#00aaff" stroke-width="1" opacity="0.4"></polygon>
+        <circle cx="16" cy="18" r="2.5" fill="none" stroke="#00ffe7" stroke-width="1.2"></circle>
+      </svg>
+      <div>
+        <div class="brand-name">HAKLYON</div>
+        <div class="brand-sub">CORTEX VISION v8.0</div>
+      </div>
+    </div>
+    <div id="sysTime">21:02:28</div>
+  </div>
+
+  <div id="statusBar">
+    <div class="dot r" id="sDot"></div>
+    <span id="sText" style="color:var(--dim)">NOT CONNECTED</span>
+    <span style="opacity:0.25">|</span>
+    <span id="sRoom" style="color:var(--dim);font-size:8px">NO ROOM</span>
+  </div>
+
+  <div id="tabs">
+    <button class="tab active" onclick="switchTab(&#39;connect&#39;,this)">⚙ CONNECT</button>
+    <button class="tab" onclick="switchTab(&#39;sensor&#39;,this)">📡 SENSOR</button>
+    <button class="tab" onclick="switchTab(&#39;vision&#39;,this)">👁 VISION</button>
+  </div>
+
+  <div id="connectPanel" class="panel active">
+    <div class="connect-card">
+      <div class="connect-title">◈ ROOM CODE</div>
+      <div class="connect-sub">
+        Zadaj rovnaký kód na oboch zariadeniach.<br>
+        <span style="color:var(--c4)">Automatické spojenie cez Ably.</span>
+      </div>
+      <input class="room-input" id="roomInput" type="text" maxlength="8" placeholder="HAKLYON" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,&#39;&#39;)">
+      <div class="role-grid">
+        <button class="btn btn-c btn-big" onclick="joinAs(&#39;sensor&#39;)">
+          📡 SENSOR<br><span style="font-size:7px;opacity:0.5">iPhone — kamera</span>
+        </button>
+        <button class="btn btn-o btn-big" onclick="joinAs(&#39;vision&#39;)">
+          👁 VISION<br><span style="font-size:7px;opacity:0.5">iPad / počítač</span>
+        </button>
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">◈ POSTUP</div>
+      <div class="step"><div class="step-n">1</div><div class="step-t">Obe zariadenia otvoria <b>saxiology.github.io/hakalyon</b></div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-t">Zadajú <b>rovnaký Room Code</b></div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-t">iPhone → <b>📡 SENSOR</b> → povolí kameru</div></div>
+      <div class="step"><div class="step-n">4</div><div class="step-t">iPad/PC → <b>👁 VISION</b></div></div>
+      <div class="step"><div class="step-n">5</div><div class="step-t"><b>Automatické spojenie do 10 sekúnd</b></div></div>
+    </div>
+    <div class="term" id="connectLog"><div class="lg info"><span class="t">[21:02:09]</span><span class="m">HAKLYON CORTEX v8.0</span></div><div class="lg ok"><span class="t">[21:02:09]</span><span class="m">Signaling: Ably real-time (spoľahlivé)</span></div><div class="lg ok"><span class="t">[21:02:09]</span><span class="m">TURN: OpenRelay</span></div><div class="lg info"><span class="t">[21:02:09]</span><span class="m">Zadaj Room Code a vyber rolu</span></div></div>
+  </div>
+
+  <div id="sensorPanel" class="panel">
+    <div class="cam-wrap">
+      <video id="localVideo" autoplay="" muted="" playsinline=""></video>
+      <div class="hc tl"></div><div class="hc tr"></div>
+      <div class="hc bl"></div><div class="hc br"></div>
+      <div class="cross"></div>
+      <div class="cam-top" id="camTop">◈ SENSOR INACTIVE ◈</div>
+      <div id="recB"><div class="dot r"></div>LIVE</div>
+    </div>
+    <div class="term" id="sensorLog"></div>
+  </div>
+
+  <div id="visionPanel" class="panel">
+    <div class="vision-wrap">
+      <video id="remoteVideo" autoplay="" playsinline=""></video>
+      <canvas id="tfCanvas"></canvas>
+      <div class="sbeam"></div>
+      <div class="vgt"></div><div class="vgb"></div>
+      <div class="vbrand"><div class="vbrand-n">HAKLYON</div><div class="vbrand-s">CORTEX VISION ◈ PROPERTY SCAN</div></div>
+      <div class="vstats"><div id="vFps">-- FPS</div><div id="vLat">-- ms</div><div id="vRoomD" style="color:var(--c4)">--</div></div>
+      <div class="vc" style="top:10px;left:10px;border-top:2px solid rgba(0,255,231,0.4);border-left:2px solid rgba(0,255,231,0.4)"></div>
+      <div class="vc" style="top:10px;right:10px;border-top:2px solid rgba(0,255,231,0.4);border-right:2px solid rgba(0,255,231,0.4)"></div>
+      <div class="vc" style="bottom:10px;left:10px;border-bottom:2px solid rgba(0,255,231,0.4);border-left:2px solid rgba(0,255,231,0.4)"></div>
+      <div class="vc" style="bottom:10px;right:10px;border-bottom:2px solid rgba(0,255,231,0.4);border-right:2px solid rgba(0,255,231,0.4)"></div>
+      <div class="vbottom">
+        <div class="det-panel"><div class="det-title">▸ DETECTED</div><div id="detFeed"></div></div>
+        <div class="aether-box"><div class="ae-lbl">AETHER MINED</div><div class="ae-num" id="aeNum">0</div><div class="ae-unit">Æ TOKENS</div></div>
+        <div class="stat-box">
+          <div class="sr"><span class="sl">OBJ</span><span class="sv" id="sObj">0</span></div>
+          <div class="sr"><span class="sl">TOTAL</span><span class="sv" id="sTotal">0</span></div>
+          <div class="sr"><span class="sl">CONF</span><span class="sv" id="sConf">--%</span></div>
+        </div>
+      </div>
+      <div id="noStream">
+        <div class="no-icon">◈</div>
+        <div style="font-size:10px;color:var(--dim);letter-spacing:3px">AWAITING STREAM</div>
+        <div style="font-size:8px;color:rgba(140,207,207,0.2);letter-spacing:2px;text-align:center;padding:0 30px;margin-top:4px">Pripoj SENSOR rovnakým Room Code</div>
+      </div>
+    </div>
+    <div class="vbar">
+      <button class="btn btn-g" onclick="showPdfModal()" style="margin-bottom:0">📄 PDF</button>
+      <button class="btn btn-r" onclick="doDisconnect()" style="margin-bottom:0">■ STOP</button>
+    </div>
+    <div class="term" id="visionLog" style="border-radius:0;border-top:none;height:60px"></div>
+  </div>
+</div>
+
+<div id="pdfModal">
+  <div class="pdf-box">
+    <div class="pdf-title">◈ HAKLYON REPORT</div>
+    <div id="pdfSub" style="font-size:9px;color:var(--dim);margin-bottom:10px"></div>
+    <div class="pdf-preview" id="pdfPreview"></div>
+    <button class="btn btn-g" onclick="downloadPDF()" style="margin-bottom:8px">⬇ STIAHNUŤ</button>
+    <button class="btn btn-r" onclick="document.getElementById(&#39;pdfModal&#39;).classList.remove(&#39;show&#39;)">✕ ZAVRIEŤ</button>
+  </div>
+</div>
+
+<!-- Ably SDK -->
+<script src="./HAKLYON — CORTEX VISION v8_files/ably.min-2.js.stiahnuť"></script>
+<script>
+// ── ABLY CONFIG ───────────────────────
+const ABLY_KEY = '2BRikw.7goqrA:Oxzpf14lGDjkirq-0_2nYsn1M0k83NmYZRU5AE9Xz3U';
+
+// ── WAKE LOCK ────────────────────────
+let wakeLock = null;
+async function requestWakeLock() {
+  try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+}
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') await requestWakeLock();
+});
+requestWakeLock();
+
+// ── CLOCK ────────────────────────────
+setInterval(() => {
+  const n = new Date();
+  document.getElementById('sysTime').textContent =
+    [n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
+}, 1000);
+
+// ── TABS ────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(name+'Panel').classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── LOG ──────────────────────────────
+function ts() { return new Date().toTimeString().slice(0,8); }
+function log(id, msg, type='') {
+  const t = document.getElementById(id); if (!t) return;
+  const d = document.createElement('div'); d.className = 'lg '+type;
+  d.innerHTML = `<span class="t">[${ts()}]</span><span class="m">${msg}</span>`;
+  t.appendChild(d); t.scrollTop = t.scrollHeight;
+  if (t.children.length > 80) t.removeChild(t.firstChild);
+}
+function setStatus(text, color, dotCls) {
+  document.getElementById('sText').textContent = text;
+  document.getElementById('sText').style.color = color || 'var(--dim)';
+  document.getElementById('sDot').className = 'dot '+(dotCls||'r');
+}
+function setRoom(t) { document.getElementById('sRoom').textContent = t; }
+function ovStep(s) { document.getElementById('ovStep').textContent = s; }
+function ovSub(s) { document.getElementById('ovSub').textContent = s; }
+function showOv() { document.getElementById('overlay').classList.add('show'); }
+function hideOv() { document.getElementById('overlay').classList.remove('show'); }
+
+// ── STATE ────────────────────────────
+let myRole = '', myRoom = '';
+let pc = null, localStream = null;
+let ablyClient = null, ablyChannel = null;
+let aether = 0, totalDet = 0, confArr = [];
+let tfModel = null, fpsCount = 0, lastFpsT = Date.now();
+let detectionLog = [], feedMap = {};
+
+// ── OBJECT MAPS ──────────────────────
+const OBJ_MAP = {
+  'person':'OSOBA','bicycle':'BICYKEL','car':'AUTO','motorcycle':'MOTORKA',
+  'airplane':'LIETADLO','bus':'AUTOBUS','train':'VLAK','truck':'KAMIÓN','boat':'ČLN',
+  'traffic light':'SEMAFOR','fire hydrant':'HYDRANT','stop sign':'STOPKA','parking meter':'PARKOMAT','bench':'LAVIČKA',
+  'bird':'VTÁK','cat':'MAČKA','dog':'PES','horse':'KOŇ','sheep':'OVCA',
+  'cow':'KRAVA','elephant':'SLON','bear':'MEDVEĎ','zebra':'ZEBRA','giraffe':'ŽIRAFA',
+  'backpack':'BATOH','umbrella':'DÁŽDNIK','handbag':'KABELKA','tie':'KRAVATA','suitcase':'KUFOR',
+  'bottle':'FĽAŠA','wine glass':'POHÁR','cup':'ŠÁLKA','fork':'VIDLIČKA',
+  'knife':'NÔŽ','spoon':'LYŽICA','bowl':'MISA',
+  'banana':'BANÁN','apple':'JABLKO','sandwich':'SENDVIČ','orange':'POMARANČ',
+  'broccoli':'BROKOLICA','carrot':'MRKVA','hot dog':'HOT DOG','pizza':'PIZZA','donut':'ŠIŠKA','cake':'TORTA',
+  'chair':'STOLIČKA','couch':'GAUČ','potted plant':'KVETINÁČ','bed':'POSTEĽ',
+  'dining table':'JED.STÔL','toilet':'ZÁCHOD','tv':'TELEVÍZOR',
+  'laptop':'LAPTOP','mouse':'MYŠKA','remote':'OVLÁDAČ','keyboard':'KLÁVESNICA','cell phone':'MOBIL',
+  'microwave':'MIKROVLNKA','oven':'RÚRA','toaster':'HRIANKOVAČ','sink':'UMÝVADLO','refrigerator':'CHLADNIČKA',
+  'book':'KNIHA','clock':'HODINY','vase':'VÁZA','scissors':'NOŽNICE',
+  'teddy bear':'PLYŠÁK','hair drier':'SUŠIČ','toothbrush':'KEFKA',
+};
+const OBJ_COLOR = {
+  'OSOBA':'#00ffe7','AUTO':'#ffe600','BICYKEL':'#ffe600','KAMIÓN':'#ffe600','MOTORKA':'#ffe600',
+  'POSTEĽ':'#d070ff','GAUČ':'#d070ff','STOLIČKA':'#d070ff','JED.STÔL':'#d070ff',
+  'TELEVÍZOR':'#00aaff','LAPTOP':'#00aaff','MOBIL':'#00aaff','KLÁVESNICA':'#00aaff','MYŠKA':'#00aaff',
+  'CHLADNIČKA':'#ff6aaa','MIKROVLNKA':'#ff6aaa','RÚRA':'#ff6aaa','HRIANKOVAČ':'#ff6aaa',
+  'KVETINÁČ':'#4f8','LAVIČKA':'#8f4','BATOH':'#aff','KABELKA':'#faf','KUFOR':'#aff',
+  'KNIHA':'#8cf','HODINY':'#fc8','VÁZA':'#fca','PLYŠÁK':'#ffa0c0',
+  'BANÁN':'#ff0','JABLKO':'#f44','PIZZA':'#fa4','TORTA':'#fca',
+  'MAČKA':'#f8a','PES':'#fa8','VTÁK':'#8ff',
+};
+function getLabel(cls) { return OBJ_MAP[cls] || cls.toUpperCase().slice(0,10); }
+function getColor(cls) { return OBJ_COLOR[getLabel(cls)] || '#00ffe7'; }
+
+// ── ICE SERVERS ──────────────────────
+const ICE = { iceServers: [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+]};
+
+// ── ABLY SIGNALING ────────────────────
+async function initAbly(room) {
+  ovStep('Pripájam Ably signaling...');
+  log('connectLog', 'Connecting to Ably...', 'info');
+
+  ablyClient = new Ably.Realtime({ key: ABLY_KEY });
+
+  await new Promise((resolve, reject) => {
+    ablyClient.connection.once('connected', resolve);
+    ablyClient.connection.once('failed', reject);
+    setTimeout(() => reject(new Error('Ably connection timeout')), 10000);
+  });
+
+  log('connectLog', '◈ Ably connected', 'ok');
+  ablyChannel = ablyClient.channels.get('haklyon-' + room);
+  return ablyChannel;
+}
+
+function sendSignal(data) {
+  if (ablyChannel) ablyChannel.publish('signal', data);
+}
+
+// ── JOIN ─────────────────────────────
+async function joinAs(role) {
+  const room = document.getElementById('roomInput').value.trim().toUpperCase();
+  if (!room) { alert('Zadaj Room Code!'); return; }
+  myRole = role; myRoom = room;
+  setRoom('ROOM: '+room);
+  setStatus('CONNECTING...', 'var(--c4)', 'y');
+  showOv();
+  ovStep('Štartujem...');
+  ovSub('Room: '+room+' | '+role.toUpperCase());
+  log('connectLog', 'Starting as '+role+' in room '+room, 'info');
+
+  try {
+    const channel = await initAbly(room);
+
+    // Subscribe to signals
+    channel.subscribe('signal', async (msg) => {
+      const data = msg.data;
+      if (data.target !== role) return; // only process messages for my role
+
+      if (data.type === 'offer' && role === 'vision') {
+        await handleOffer(data);
+      } else if (data.type === 'answer' && role === 'sensor') {
+        await handleAnswer(data);
+      } else if (data.type === 'ice') {
+        await handleIce(data);
+      }
+    });
+
+    if (role === 'sensor') {
+      await startSensor(room);
+    } else {
+      await startVision(room);
+    }
+  } catch(e) {
+    hideOv();
+    setStatus('CHYBA — skús znova', 'var(--plasma)', 'r');
+    log('connectLog', 'Error: '+e.message, 'err');
+    alert('Chyba: '+e.message);
+  }
+}
+
+// ── SENSOR ───────────────────────────
+async function startSensor(room) {
+  ovStep('Spúšťam kameru...');
+  await startCamera();
+
+  pc = new RTCPeerConnection(ICE);
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate) {
+      sendSignal({ type: 'ice', target: 'vision', candidate: e.candidate.toJSON() });
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    const s = pc.connectionState;
+    log('sensorLog', 'P2P: '+s, s==='connected'?'ok':s==='failed'?'err':'');
+    if (s === 'connected') {
+      hideOv();
+      setStatus('STREAMING', '#00ff88', 'g');
+      document.getElementById('recB').style.display = 'flex';
+      document.getElementById('camTop').textContent = '◈ STREAMING ◈';
+      document.querySelectorAll('.tab')[1].click();
+    }
+  };
+
+  ovStep('Vytváram offer...');
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  // Wait for ICE gathering max 5s
+  await gatherICE(pc, 5000);
+
+  ovStep('Posielam offer cez Ably...');
+  sendSignal({
+    type: 'offer',
+    target: 'vision',
+    sdp: pc.localDescription.sdp,
+    sdpType: pc.localDescription.type
+  });
+
+  ovStep('Čakám na VISION zariadenie...');
+  ovSub('Otvor URL na iPade/PC → zadaj "'+room+'" → klikni 👁 VISION');
+  log('sensorLog', 'Offer sent via Ably — waiting for Vision...', 'ok');
+}
+
+// ── VISION ───────────────────────────
+async function startVision(room) {
+  pc = new RTCPeerConnection(ICE);
+
+  pc.ontrack = (e) => {
+    log('visionLog', '◈ STREAM RECEIVED!', 'ok');
+    const vid = document.getElementById('remoteVideo');
+    vid.srcObject = e.streams[0];
+    document.getElementById('noStream').style.display = 'none';
+    hideOv();
+    setStatus('STREAMING', '#00ff88', 'g');
+    document.querySelectorAll('.tab')[2].click();
+    vid.onloadeddata = () => initTF();
+  };
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate) {
+      sendSignal({ type: 'ice', target: 'sensor', candidate: e.candidate.toJSON() });
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    log('visionLog', 'P2P: '+pc.connectionState, pc.connectionState==='connected'?'ok':'');
+  };
+
+  ovStep('Čakám na SENSOR offer...');
+  ovSub('Otvor URL na iPhone → zadaj "'+room+'" → klikni 📡 SENSOR');
+  document.querySelectorAll('.tab')[2].click();
+  log('visionLog', 'Waiting for Sensor offer via Ably...', 'info');
+}
+
+async function handleOffer(data) {
+  log('visionLog', 'Offer received via Ably!', 'ok');
+  ovStep('Offer prijatý — vytváram answer...');
+  showOv();
+
+  try {
+    await pc.setRemoteDescription(new RTCSessionDescription({type: data.sdpType, sdp: data.sdp}));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+
+    await gatherICE(pc, 5000);
+
+    sendSignal({
+      type: 'answer',
+      target: 'sensor',
+      sdp: pc.localDescription.sdp,
+      sdpType: pc.localDescription.type
+    });
+
+    ovStep('Answer odoslaný — čakám na stream...');
+    log('visionLog', 'Answer sent via Ably', 'ok');
+  } catch(e) {
+    log('visionLog', 'handleOffer error: '+e.message, 'err');
+  }
+}
+
+async function handleAnswer(data) {
+  log('sensorLog', 'Answer received via Ably!', 'ok');
+  ovStep('Answer prijatý — finalizujem...');
+  try {
+    await pc.setRemoteDescription(new RTCSessionDescription({type: data.sdpType, sdp: data.sdp}));
+    log('sensorLog', 'P2P connecting...', 'ok');
+  } catch(e) {
+    log('sensorLog', 'handleAnswer error: '+e.message, 'err');
+  }
+}
+
+async function handleIce(data) {
+  try {
+    if (pc && pc.remoteDescription) {
+      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+    }
+  } catch(e) {}
+}
+
+function gatherICE(pc, maxMs) {
+  return new Promise(resolve => {
+    let done = false;
+    const finish = () => { if (!done) { done = true; resolve(); } };
+    pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === 'complete') finish(); };
+    pc.onicecandidate = (e) => { if (!e.candidate) finish(); };
+    setTimeout(finish, maxMs);
+  });
+}
+
+// ── CAMERA ───────────────────────────
+async function startCamera() {
+  log('sensorLog', 'Requesting camera...', 'info');
+  localStream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'environment', width: {ideal:1280}, height: {ideal:720} },
+    audio: false
+  });
+  document.getElementById('localVideo').srcObject = localStream;
+  document.getElementById('camTop').textContent = '◈ CAMERA ACTIVE ◈';
+  log('sensorLog', 'Camera: '+localStream.getVideoTracks()[0].label, 'ok');
+}
+
+function doDisconnect() {
+  if (pc) try { pc.close(); } catch(e) {}
+  if (ablyClient) try { ablyClient.close(); } catch(e) {}
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  pc = ablyClient = ablyChannel = localStream = null;
+  setStatus('DISCONNECTED', 'var(--dim)', 'r');
+  setRoom('NO ROOM');
+  document.getElementById('noStream').style.display = 'flex';
+  document.getElementById('remoteVideo').srcObject = null;
+  hideOv();
+  log('connectLog', 'Disconnected', 'warn');
+}
+
+// ── TF.js ────────────────────────────
+async function initTF() {
+  log('visionLog', 'Loading TF.js COCO-SSD...', 'info');
+  try {
+    await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
+    await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+    tfModel = await cocoSsd.load({base:'mobilenet_v2'});
+    log('visionLog', '◈ AI online — 80+ object classes', 'ok');
+    runDetection();
+  } catch(e) {
+    log('visionLog', 'TF.js error — DEMO: '+e.message, 'warn');
+    runDemo();
+  }
+}
+
+function loadScript(src) {
+  return new Promise((res,rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+    const s = document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+
+async function runDetection() {
+  const vid = document.getElementById('remoteVideo');
+  const canvas = document.getElementById('tfCanvas');
+  const ctx = canvas.getContext('2d');
+  const frame = async () => {
+    if (!tfModel||vid.paused||vid.ended||vid.readyState<2) { requestAnimationFrame(frame); return; }
+    const t0 = performance.now();
+    canvas.width = vid.videoWidth||vid.clientWidth;
+    canvas.height = vid.videoHeight||vid.clientHeight;
+    const W=canvas.width, H=canvas.height;
+    let preds=[];
+    try { preds = await tfModel.detect(vid); } catch(e) {}
+    const lat = Math.round(performance.now()-t0);
+    const valid = preds.filter(p=>p.score>0.35);
+    ctx.clearRect(0,0,W,H);
+    valid.forEach(p => {
+      const [x,y,w,h] = p.bbox;
+      const col = getColor(p.class);
+      const label = getLabel(p.class);
+      const conf = Math.round(p.score*100);
+      let r=0,g=220,b=180;
+      const hx=col.replace('#','');
+      if(hx.length===3){r=parseInt(hx[0]+hx[0],16);g=parseInt(hx[1]+hx[1],16);b=parseInt(hx[2]+hx[2],16);}
+      else if(hx.length===6){r=parseInt(hx.slice(0,2),16);g=parseInt(hx.slice(2,4),16);b=parseInt(hx.slice(4,6),16);}
+      ctx.shadowColor=col; ctx.shadowBlur=14; ctx.strokeStyle=col; ctx.lineWidth=2; ctx.strokeRect(x,y,w,h);
+      const cs=Math.min(w,h)*0.18+8; ctx.lineWidth=3; ctx.shadowBlur=8;
+      [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(([cx,cy,dx,dy])=>{
+        ctx.beginPath();ctx.moveTo(cx+dx*cs,cy);ctx.lineTo(cx,cy);ctx.lineTo(cx,cy+dy*cs);ctx.stroke();
+      });
+      ctx.shadowBlur=0; ctx.fillStyle=`rgba(${r},${g},${b},0.07)`; ctx.fillRect(x,y,w,h);
+      const FSIZE=Math.max(14,Math.min(20,w*0.13));
+      ctx.font=`bold ${FSIZE}px "Share Tech Mono",monospace`;
+      const mainTxt=label; const subTxt=`${conf}%  +${p.score>0.85?2:1}Æ`;
+      const lblW=Math.max(ctx.measureText(mainTxt).width,ctx.measureText(subTxt).width)+18;
+      const lblH=FSIZE*2+16;
+      const lblX=Math.min(Math.max(x,2),W-lblW-2);
+      const lblY=y>lblH+6?y-lblH-4:Math.min(y+h+4,H-lblH-2);
+      ctx.fillStyle='rgba(0,2,8,0.92)'; ctx.fillRect(lblX,lblY,lblW,lblH);
+      ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=6; ctx.fillRect(lblX,lblY,lblW,3);
+      ctx.fillStyle=col; ctx.shadowBlur=10; ctx.font=`bold ${FSIZE}px "Share Tech Mono",monospace`; ctx.fillText(mainTxt,lblX+8,lblY+FSIZE+3);
+      ctx.shadowBlur=4; ctx.fillStyle=`rgba(${r},${g},${b},0.75)`; ctx.font=`${FSIZE-3}px "Share Tech Mono",monospace`; ctx.fillText(subTxt,lblX+8,lblY+FSIZE*2+5); ctx.shadowBlur=0;
+    });
+    fpsCount++; const now=Date.now();
+    if(now-lastFpsT>=1000){document.getElementById('vFps').textContent=fpsCount+' FPS';fpsCount=0;lastFpsT=now;}
+    document.getElementById('vLat').textContent=lat+' ms';
+    document.getElementById('vRoomD').textContent='◈ '+myRoom;
+    updateStats(valid); addToFeed(valid); requestAnimationFrame(frame);
+  };
+  frame();
+}
+
+function updateStats(valid){
+  document.getElementById('sObj').textContent=valid.length;
+  document.getElementById('sTotal').textContent=totalDet;
+  if(valid.length){confArr.push(...valid.map(p=>p.score));if(confArr.length>100)confArr=confArr.slice(-100);document.getElementById('sConf').textContent=Math.round(confArr.reduce((a,b)=>a+b)/confArr.length*100)+'%';}
+}
+
+function addToFeed(valid){
+  valid.forEach(p=>{
+    if(p.score<0.35)return;
+    const label=getLabel(p.class);const col=getColor(p.class);const conf=Math.round(p.score*100);const ae=p.score>0.85?2:1;
+    aether+=ae;totalDet++;document.getElementById('aeNum').textContent=aether;
+    detectionLog.push({time:new Date().toLocaleTimeString(),label,conf,ae,room:myRoom});
+    if(detectionLog.length>500)detectionLog.shift();
+    const feed=document.getElementById('detFeed');
+    if(feedMap[p.class]){
+      feedMap[p.class].querySelector('.det-pct').textContent=conf+'%';
+      const pl=feedMap[p.class].querySelector('.det-ae');pl.textContent='+'+ae+'Æ';pl.style.animation='none';void pl.offsetWidth;pl.style.animation='di 0.4s ease';
+    }else{
+      const div=document.createElement('div');div.className='det-item';
+      div.innerHTML=`<div class="det-bar" style="background:${col};box-shadow:0 0 5px ${col}"></div><span class="det-lbl" style="color:${col}">${label}</span><span class="det-pct">${conf}%</span><span class="det-ae">+${ae}Æ</span>`;
+      feedMap[p.class]=div;feed.insertBefore(div,feed.firstChild);while(feed.children.length>5)feed.removeChild(feed.lastChild);
+    }
+    log('visionLog',`${label} ${conf}% +${ae}Æ [Σ${aether}Æ]`,'ae');
+  });
+}
+
+const DEMO=[{class:'person',score:0.93},{class:'chair',score:0.87},{class:'couch',score:0.82},{class:'laptop',score:0.79},{class:'book',score:0.74},{class:'tv',score:0.88},{class:'teddy bear',score:0.68},{class:'cell phone',score:0.91},{class:'cup',score:0.77}];
+function runDemo(){
+  document.getElementById('noStream').style.display='none';
+  setInterval(()=>{
+    const picks=DEMO.sort(()=>Math.random()-0.5).slice(0,Math.floor(Math.random()*3)+1).map(p=>({...p,score:Math.max(0.36,p.score-0.05+Math.random()*0.1),bbox:[0,0,0,0]}));
+    updateStats(picks);addToFeed(picks);
+    document.getElementById('vFps').textContent=Math.floor(8+Math.random()*10)+' FPS';
+    document.getElementById('vLat').textContent=Math.floor(25+Math.random()*50)+' ms';
+  },1200);
+}
+
+function showPdfModal(){
+  if(!detectionLog.length){alert('Zatiaľ žiadne detekcie.');return;}
+  const counts={},maxConf={};
+  detectionLog.forEach(d=>{counts[d.label]=(counts[d.label]||0)+1;maxConf[d.label]=Math.max(maxConf[d.label]||0,d.conf);});
+  document.getElementById('pdfSub').textContent=`${detectionLog.length} detekcií · ${Object.keys(counts).length} unikátnych · ${aether}Æ`;
+  document.getElementById('pdfPreview').innerHTML=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([l,c])=>`<div class="pdf-row"><span style="color:var(--c1);flex:1">${l}</span><span style="color:var(--dim)">${c}×</span><span style="color:var(--c3)">+${c}Æ</span></div>`).join('');
+  document.getElementById('pdfModal').classList.add('show');
+}
+
+function downloadPDF(){
+  const now=new Date();
+  const counts={},maxConf={};
+  detectionLog.forEach(d=>{counts[d.label]=(counts[d.label]||0)+1;maxConf[d.label]=Math.max(maxConf[d.label]||0,d.conf);});
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:monospace;padding:30px;background:#fff;color:#111;}.header{border-bottom:3px solid #007acc;padding-bottom:16px;margin-bottom:20px;display:flex;justify-content:space-between;}.brand{font-size:28px;font-weight:900;color:#007acc;letter-spacing:4px;}.sub{font-size:9px;color:#999;letter-spacing:3px;}.meta{text-align:right;font-size:10px;color:#666;line-height:1.8;}.st{font-size:11px;color:#007acc;letter-spacing:3px;margin:20px 0 10px;border-bottom:1px solid #eee;padding-bottom:6px;}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;}.card{border:1px solid #eee;border-radius:4px;padding:12px;text-align:center;}.num{font-size:28px;font-weight:900;color:#007acc;}.lbl{font-size:9px;color:#999;letter-spacing:2px;margin-top:4px;}table{width:100%;border-collapse:collapse;}th{background:#007acc;color:#fff;padding:8px 12px;text-align:left;font-size:10px;letter-spacing:2px;}td{padding:8px 12px;border-bottom:1px solid #f0f0f0;font-size:11px;}tr:nth-child(even) td{background:#f8f8f8;}.bar{height:6px;background:#eee;border-radius:3px;overflow:hidden;margin-top:3px;}.fill{height:100%;background:linear-gradient(90deg,#007acc,#00bbe7);border-radius:3px;}.badge{display:inline-block;background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold;}.tl{display:flex;gap:12px;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:10px;}.footer{margin-top:30px;padding-top:12px;border-top:1px solid #eee;font-size:9px;color:#bbb;text-align:center;letter-spacing:2px;}@media print{body{padding:15px}}</style></head><body><div class="header"><div><div class="brand">HAKLYON</div><div class="sub">CORTEX VISION ◈ PROPERTY SCAN REPORT</div></div><div class="meta"><div><b>Dátum:</b> ${now.toLocaleDateString('sk-SK')}</div><div><b>Čas:</b> ${now.toLocaleTimeString('sk-SK')}</div><div><b>Room:</b> ${myRoom}</div></div></div><div class="st">◈ SÚHRN</div><div class="grid"><div class="card"><div class="num">${detectionLog.length}</div><div class="lbl">CELKOM DETEKCIÍ</div></div><div class="card"><div class="num">${Object.keys(counts).length}</div><div class="lbl">UNIKÁTNYCH OBJEKTOV</div></div><div class="card"><div class="num" style="color:#e65100">${aether}</div><div class="lbl">AETHER TOKENOV</div></div></div><div class="st">◈ OBJEKTY</div><table><thead><tr><th>#</th><th>OBJEKT</th><th>POČET</th><th>MAX CONF</th><th>AETHER</th></tr></thead><tbody>${sorted.map(([l,c],i)=>`<tr><td style="color:#999">${i+1}</td><td><b>${l}</b></td><td>${c}×</td><td>${maxConf[l]}%<div class="bar"><div class="fill" style="width:${maxConf[l]}%"></div></div></td><td><span class="badge">+${c}Æ</span></td></tr>`).join('')}</tbody></table><div class="st">◈ TIMELINE</div>${detectionLog.slice(-50).reverse().map(d=>`<div class="tl"><span style="color:#999;width:65px;flex-shrink:0">${d.time}</span><span style="flex:1;font-weight:bold">${d.label}</span><span style="color:#007acc">${d.conf}%</span><span style="color:#e65100;margin-left:8px">+${d.ae}Æ</span></div>`).join('')}<div class="footer">HAKLYON CORTEX VISION v8.0 ◈ ${now.toLocaleDateString('sk-SK')}</div></body></html>`;
+  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`HAKLYON-${myRoom}-${now.toISOString().slice(0,10)}.html`;a.click();URL.revokeObjectURL(url);
+  document.getElementById('pdfModal').classList.remove('show');
+  log('visionLog','◈ Report stiahnutý','ok');
+}
+
+log('connectLog','HAKLYON CORTEX v8.0','info');
+log('connectLog','Signaling: Ably real-time (spoľahlivé)','ok');
+log('connectLog','TURN: OpenRelay','ok');
+log('connectLog','Zadaj Room Code a vyber rolu','info');
+</script>
+
+
+</body></html>

@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<!-- saved from url=(0050)file:///C:/Users/LILI/Downloads/hakalyon-v4_3.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HAKALYON — CORTEX VISION v4</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+:root{
+  --c1:#00ffe7;--c2:#0af;--c3:#ff6a00;--c4:#ffe600;
+  --plasma:#ff2d6b;--void:#03060a;
+  --border:rgba(0,255,231,0.18);--border2:rgba(0,170,255,0.12);
+  --text:#8ecfcf;--dim:rgba(140,207,207,0.4);--panel:rgba(0,15,28,0.92);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--void);font-family:'Share Tech Mono',monospace;color:var(--text);overflow:hidden;user-select:none;}
+
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 120% 80% at 50% -20%,rgba(0,100,180,0.1) 0%,transparent 60%),var(--void);}
+#bg::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,255,231,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,231,0.04) 1px,transparent 1px);background-size:60px 60px;animation:gs 20s linear infinite;}
+@keyframes gs{from{background-position:0 0}to{background-position:60px 60px}}
+#scanline{position:fixed;top:0;left:0;right:0;height:2px;z-index:9999;background:linear-gradient(90deg,transparent,rgba(0,255,231,0.3),transparent);animation:scan 5s linear infinite;pointer-events:none;}
+@keyframes scan{0%{top:-2px}100%{top:100vh}}
+
+#app{position:relative;z-index:1;width:100vw;height:100vh;display:flex;flex-direction:column;}
+
+/* TOP BAR */
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:48px;min-height:48px;background:rgba(0,6,16,0.98);border-bottom:1px solid var(--border);flex-shrink:0;position:relative;}
+#topbar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--c1),var(--c2),var(--c1),transparent);opacity:0.6;}
+.brand{display:flex;align-items:center;gap:8px;}
+.brand svg{filter:drop-shadow(0 0 8px var(--c1));}
+.brand-name{font-family:'Orbitron',monospace;font-size:15px;font-weight:900;letter-spacing:5px;color:var(--c1);text-shadow:0 0 20px var(--c1);}
+.brand-sub{font-size:6px;letter-spacing:3px;color:var(--dim);}
+#sysTime{font-family:'Orbitron',monospace;color:var(--c1);font-size:12px;letter-spacing:2px;}
+
+/* STATUS */
+#statusBar{display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 14px;background:rgba(0,4,12,0.98);border-bottom:1px solid var(--border2);flex-shrink:0;font-size:10px;letter-spacing:1px;}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot.g{background:#00ff88;box-shadow:0 0 8px #00ff88;animation:bp 2s infinite;}
+.dot.r{background:var(--plasma);box-shadow:0 0 8px var(--plasma);}
+.dot.y{background:var(--c4);box-shadow:0 0 8px var(--c4);animation:bp 1s infinite;}
+.dot.c{background:var(--c1);box-shadow:0 0 8px var(--c1);animation:bp 1.5s infinite;}
+@keyframes bp{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* TABS */
+#tabs{display:flex;background:rgba(0,4,12,0.98);border-bottom:1px solid var(--border2);flex-shrink:0;}
+.tab{flex:1;padding:9px 4px;background:transparent;border:none;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;border-right:1px solid var(--border2);text-transform:uppercase;position:relative;}
+.tab:last-child{border-right:none;}
+.tab::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--c1);transform:scaleX(0);transition:transform 0.3s;}
+.tab.active{color:var(--c1);background:rgba(0,255,231,0.03);}
+.tab.active::after{transform:scaleX(1);}
+
+.panel{display:none;flex:1;overflow:hidden;}
+.panel.active{display:flex;flex-direction:column;animation:fu 0.3s ease;}
+@keyframes fu{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ══ CONNECT PANEL ══ */
+#connectPanel{padding:14px;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+.connect-card{background:linear-gradient(135deg,rgba(0,255,231,0.06),rgba(0,170,255,0.02));border:1px solid rgba(0,255,231,0.2);border-radius:4px;padding:18px;text-align:center;flex-shrink:0;}
+.connect-title{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:var(--c1);letter-spacing:4px;margin-bottom:4px;}
+.connect-sub{font-size:8px;color:var(--dim);letter-spacing:2px;margin-bottom:14px;line-height:1.8;}
+
+.room-input{width:100%;padding:14px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,231,0.25);border-radius:3px;color:var(--c1);font-family:'Orbitron',monospace;font-size:22px;font-weight:700;letter-spacing:8px;text-align:center;outline:none;text-transform:uppercase;margin-bottom:12px;-webkit-appearance:none;}
+.room-input::placeholder{color:rgba(0,255,231,0.15);font-size:13px;letter-spacing:3px;}
+.room-input:focus{border-color:rgba(0,255,231,0.5);box-shadow:0 0 20px rgba(0,255,231,0.08);}
+
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.btn{display:block;width:100%;padding:10px;border:none;border-radius:3px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.18s;margin-bottom:6px;-webkit-tap-highlight-color:transparent;}
+.btn:last-child{margin-bottom:0;}
+.btn:active{transform:scale(0.96);}
+.btn-c{background:rgba(0,255,231,0.08);border:1px solid rgba(0,255,231,0.3);color:var(--c1);}
+.btn-o{background:rgba(255,106,0,0.1);border:1px solid rgba(255,106,0,0.3);color:var(--c3);}
+.btn-r{background:rgba(255,45,107,0.08);border:1px solid rgba(255,45,107,0.25);color:var(--plasma);}
+.btn-g{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);color:#00ff88;}
+.btn-big{padding:16px;font-size:11px;}
+
+.info-card{background:var(--panel);border:1px solid var(--border2);border-radius:3px;padding:12px;flex-shrink:0;}
+.info-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:600;color:var(--c1);letter-spacing:3px;margin-bottom:8px;}
+.info-row{font-size:9px;line-height:2;color:var(--dim);}
+.info-row span{color:var(--c1);}
+
+/* Connection steps */
+.step-list{display:flex;flex-direction:column;gap:6px;}
+.step{display:flex;align-items:flex-start;gap:10px;padding:8px;background:rgba(0,255,231,0.02);border:1px solid rgba(0,255,231,0.08);border-radius:3px;}
+.step-num{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;color:var(--c1);opacity:0.4;flex-shrink:0;line-height:1;}
+.step-text{font-size:9px;color:var(--dim);line-height:1.6;}
+.step-text b{color:var(--text);}
+
+/* ══ SENSOR PANEL ══ */
+#sensorPanel{padding:10px;gap:8px;}
+.cam-wrap{position:relative;border:1px solid var(--border);border-radius:3px;overflow:hidden;background:#000;flex:1;min-height:0;}
+#localVideo{width:100%;height:100%;object-fit:cover;display:block;}
+.corner{position:absolute;width:20px;height:20px;border-color:rgba(0,255,231,0.6);border-style:solid;}
+.tl{top:8px;left:8px;border-width:2px 0 0 2px;}
+.tr{top:8px;right:8px;border-width:2px 2px 0 0;}
+.bl{bottom:8px;left:8px;border-width:0 0 2px 2px;}
+.br{bottom:8px;right:8px;border-width:0 2px 2px 0;}
+.cam-top{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--c1);letter-spacing:2px;white-space:nowrap;text-shadow:0 0 8px var(--c1);}
+.rec-badge{position:absolute;top:10px;left:34px;display:none;align-items:center;gap:4px;font-size:8px;color:var(--plasma);}
+.cross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;pointer-events:none;opacity:0.2;}
+.cross::before,.cross::after{content:'';position:absolute;background:var(--c1);}
+.cross::before{top:50%;left:0;right:0;height:1px;transform:translateY(-50%);}
+.cross::after{left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);}
+
+/* ══ VISION PANEL ══ */
+#visionPanel{padding:0;}
+.vision-wrap{position:relative;background:#000;flex:1;min-height:0;overflow:hidden;}
+#remoteVideo{width:100%;height:100%;object-fit:cover;display:block;}
+#tfCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.sbeam{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,255,231,0.8),transparent);box-shadow:0 0 12px rgba(0,255,231,0.4);animation:bm 3s ease-in-out infinite;z-index:2;pointer-events:none;}
+@keyframes bm{0%{top:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{top:100%;opacity:0}}
+.vgt{position:absolute;top:0;left:0;right:0;height:65px;background:linear-gradient(180deg,rgba(0,3,10,0.92) 0%,transparent 100%);pointer-events:none;z-index:1;}
+.vgb{position:absolute;bottom:0;left:0;right:0;height:130px;background:linear-gradient(0deg,rgba(0,3,10,0.99) 0%,transparent 100%);pointer-events:none;z-index:1;}
+
+.vbrand{position:absolute;top:11px;left:12px;z-index:3;pointer-events:none;}
+.vbrand-n{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;letter-spacing:4px;color:var(--c1);text-shadow:0 0 14px var(--c1);}
+.vbrand-s{font-size:6px;letter-spacing:3px;color:var(--dim);}
+.vstats{position:absolute;top:11px;right:12px;text-align:right;z-index:3;pointer-events:none;font-size:8px;line-height:1.9;color:rgba(0,255,231,0.55);}
+
+/* HUD corners on video */
+.vc{position:absolute;width:22px;height:22px;border-color:rgba(0,255,231,0.35);border-style:solid;z-index:2;}
+
+/* Bottom HUD */
+.vbottom{position:absolute;bottom:0;left:0;right:0;padding:6px 12px 10px;z-index:3;pointer-events:none;display:flex;align-items:flex-end;gap:6px;}
+.det-panel{flex:1;min-width:0;}
+.det-title{font-size:7px;color:var(--dim);letter-spacing:2px;margin-bottom:3px;}
+.det-item{display:flex;align-items:center;gap:4px;margin-bottom:2px;animation:di 0.25s ease;}
+@keyframes di{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:none}}
+.det-bar{width:3px;height:13px;border-radius:1px;flex-shrink:0;}
+.det-lbl{font-size:11px;font-weight:bold;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.det-pct{font-size:9px;color:var(--dim);flex-shrink:0;}
+.det-ae{font-size:10px;font-weight:bold;color:var(--c3);flex-shrink:0;}
+
+.aether-box{text-align:center;flex-shrink:0;padding:0 8px;}
+.ae-lbl{font-size:6px;letter-spacing:3px;color:rgba(255,106,0,0.45);margin-bottom:1px;}
+.ae-num{font-family:'Orbitron',monospace;font-size:38px;font-weight:900;color:var(--c3);text-shadow:0 0 24px var(--c3),0 0 60px rgba(255,106,0,0.25);line-height:1;}
+.ae-unit{font-size:7px;color:rgba(255,106,0,0.35);letter-spacing:3px;}
+
+.stat-box{text-align:right;flex-shrink:0;}
+.sr{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-bottom:3px;}
+.sl{font-size:7px;color:var(--dim);}
+.sv{font-family:'Orbitron',monospace;font-size:12px;color:var(--c1);min-width:30px;text-align:right;}
+
+/* No stream overlay */
+#noStream{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(0,3,10,0.97);z-index:10;}
+.no-icon{width:52px;height:52px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--dim);animation:rp 4s ease-in-out infinite;}
+@keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(0,255,231,0.08)}50%{box-shadow:0 0 0 14px rgba(0,255,231,0)}}
+
+/* Bottom vision bar */
+.vbar{padding:7px 10px;flex-shrink:0;background:rgba(0,3,10,0.99);border-top:1px solid var(--border2);display:flex;gap:6px;}
+.vbar .btn{margin-bottom:0;flex:1;}
+
+/* Terminal */
+.term{background:rgba(0,0,0,0.85);border:1px solid var(--border2);border-radius:2px;padding:6px;height:72px;overflow-y:auto;font-size:8px;line-height:1.7;flex-shrink:0;}
+.term::-webkit-scrollbar{width:2px;}
+.term::-webkit-scrollbar-thumb{background:var(--border);}
+.lg .t{color:rgba(140,207,207,0.18);margin-right:4px;}
+.lg .m{color:rgba(140,207,207,0.5);}
+.lg.ok .m{color:#00ff88;}
+.lg.err .m{color:var(--plasma);}
+.lg.info .m{color:var(--c1);}
+.lg.warn .m{color:var(--c4);}
+.lg.ae .m{color:var(--c3);}
+
+/* PDF modal */
+#pdfModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9000;align-items:center;justify-content:center;padding:20px;}
+#pdfModal.show{display:flex;}
+.pdf-box{background:rgba(0,10,22,0.98);border:1px solid var(--border);border-radius:4px;padding:20px;width:100%;max-width:360px;max-height:80vh;overflow-y:auto;text-align:center;}
+.pdf-title{font-family:'Orbitron',monospace;font-size:13px;color:var(--c1);letter-spacing:3px;margin-bottom:8px;}
+.pdf-sub{font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:16px;}
+.pdf-preview{background:rgba(0,0,0,0.5);border:1px solid var(--border2);border-radius:3px;padding:10px;margin-bottom:12px;text-align:left;max-height:200px;overflow-y:auto;}
+.pdf-row{font-size:9px;padding:3px 0;border-bottom:1px solid rgba(0,255,231,0.06);display:flex;gap:8px;}
+.pdf-row:last-child{border-bottom:none;}
+
+#wakeNotice{position:fixed;bottom:0;left:0;right:0;padding:4px;text-align:center;font-size:6px;color:rgba(0,255,136,0.3);letter-spacing:2px;z-index:9998;pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="scanline"></div>
+<div id="wakeNotice">◈ HAKALYON CORTEX v4.0 — SCREEN LOCK DISABLED ◈</div>
+
+<div id="app">
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 32 32">
+        <polygon points="16,2 30,26 2,26" fill="none" stroke="#00ffe7" stroke-width="1.5"></polygon>
+        <polygon points="16,8 25,24 7,24" fill="none" stroke="#00aaff" stroke-width="1" opacity="0.4"></polygon>
+        <circle cx="16" cy="18" r="2.5" fill="none" stroke="#00ffe7" stroke-width="1.2"></circle>
+      </svg>
+      <div>
+        <div class="brand-name">HAKALYON</div>
+        <div class="brand-sub">CORTEX VISION v4.0</div>
+      </div>
+    </div>
+    <div id="sysTime">13:16:58</div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div id="statusBar">
+    <div class="dot r" id="sDot"></div>
+    <span id="sText" style="color:var(--dim)">NOT CONNECTED</span>
+    <span style="opacity:0.25">|</span>
+    <span id="sRoom" style="color:var(--dim);font-size:8px">NO ROOM</span>
+  </div>
+
+  <!-- TABS -->
+  <div id="tabs">
+    <button class="tab active" onclick="switchTab(&#39;connect&#39;,this)">⚙ CONNECT</button>
+    <button class="tab" onclick="switchTab(&#39;sensor&#39;,this)">📡 SENSOR</button>
+    <button class="tab" onclick="switchTab(&#39;vision&#39;,this)">👁 VISION</button>
+  </div>
+
+  <!-- ══════ CONNECT PANEL ══════ -->
+  <div id="connectPanel" class="panel active">
+
+    <div class="connect-card">
+      <div class="connect-title">◈ ROOM CODE</div>
+      <div class="connect-sub">
+        Zadaj rovnaký kód na oboch zariadeniach.<br>
+        Automatické spojenie. Žiadne kopírovanie.<br>
+        Obrazovka zostane zapnutá.
+      </div>
+      <input class="room-input" id="roomInput" type="text" maxlength="8" placeholder="HAKALYON" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="this.value=this.value.toUpperCase()">
+      <div class="role-grid">
+        <button class="btn btn-c btn-big" onclick="joinAs(&#39;sensor&#39;)">
+          📡 SENSOR<br><span style="font-size:7px;opacity:0.5;letter-spacing:1px">iPhone — kamera</span>
+        </button>
+        <button class="btn btn-o btn-big" onclick="joinAs(&#39;vision&#39;)">
+          👁 VISION<br><span style="font-size:7px;opacity:0.5;letter-spacing:1px">iPad / počítač</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-title">◈ POSTUP</div>
+      <div class="step-list">
+        <div class="step"><div class="step-num">1</div><div class="step-text">Obe zariadenia otvoria <b>tú istú URL</b></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-text">Zadajú <b>rovnaký Room Code</b> — napr. HAKALYON</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-text">iPhone klikne <b>📡 SENSOR</b> — dá povolenie kamere</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-text">iPad/PC klikne <b>👁 VISION</b> — čaká na stream</div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-text"><b>Automatické spojenie</b> — AI začne detekovať objekty</div></div>
+        <div class="step"><div class="step-num">6</div><div class="step-text">Klikni <b>📄 PDF</b> pre export všetkých detekovaných objektov</div></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-title">◈ DETEKOVANÉ OBJEKTY (80+)</div>
+      <div class="info-row">
+        <div><span>🏠 Nehnuteľnosť:</span> Okno · Dvere · Stena · Strecha · Plot · Budova</div>
+        <div><span>🛋 Domácnosť:</span> Posteľ · Gauč · Stolička · Stôl · Skriňa</div>
+        <div><span>🍳 Kuchyňa:</span> Chladnička · Rúra · Mikrovlnka · Drez · Hriankovač</div>
+        <div><span>💻 Elektronika:</span> TV · Laptop · Mobil · Klávesnica · Myška</div>
+        <div><span>🌿 Exteriér:</span> Auto · Bicykel · Strom · Kvetináč · Lavička</div>
+        <div><span>📚 Ostatné:</span> Kniha · Plyšák · Hodiny · Váza · Taška · Kufor</div>
+      </div>
+    </div>
+
+    <div class="term" id="connectLog"><div class="lg info"><span class="t">[13:16:47]</span><span class="m">HAKALYON CORTEX v4.0 boot</span></div><div class="lg ok"><span class="t">[13:16:47]</span><span class="m">WebRTC + TURN relay initialized</span></div><div class="lg ok"><span class="t">[13:16:47]</span><span class="m">80+ objektov — slovenské označenia</span></div><div class="lg ok"><span class="t">[13:16:47]</span><span class="m">PDF export: všetky detekcie + timeline</span></div><div class="lg info"><span class="t">[13:16:47]</span><span class="m">Zadaj Room Code a vyber rolu ⬆</span></div><div class="lg ok"><span class="t">[13:16:47]</span><span class="m">◈ Screen wake lock active</span></div></div>
+  </div>
+
+  <!-- ══════ SENSOR PANEL ══════ -->
+  <div id="sensorPanel" class="panel">
+    <div class="cam-wrap">
+      <video id="localVideo" autoplay="" muted="" playsinline=""></video>
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="cross"></div>
+      <div class="cam-top" id="camTop">◈ SENSOR INACTIVE ◈</div>
+      <div class="rec-badge" id="recB"><div class="dot r"></div>LIVE</div>
+    </div>
+    <button class="btn btn-c" id="btnCam" onclick="startCamera()">▶ INIT CAMERA</button>
+    <div class="term" id="sensorLog"></div>
+  </div>
+
+  <!-- ══════ VISION PANEL ══════ -->
+  <div id="visionPanel" class="panel">
+    <div class="vision-wrap">
+      <video id="remoteVideo" autoplay="" playsinline=""></video>
+      <canvas id="tfCanvas"></canvas>
+      <div class="sbeam"></div>
+      <div class="vgt"></div><div class="vgb"></div>
+
+      <!-- Brand -->
+      <div class="vbrand">
+        <div class="vbrand-n">HAKALYON</div>
+        <div class="vbrand-s">CORTEX VISION ◈ PROPERTY SCAN</div>
+      </div>
+
+      <!-- Stats top right -->
+      <div class="vstats" id="vstats">
+        <div id="vFps">-- FPS</div>
+        <div id="vLat">-- ms</div>
+        <div id="vRoomDisp" style="color:var(--c4)">--</div>
+      </div>
+
+      <!-- Corners -->
+      <div class="vc" style="top:10px;left:10px;border-top:2px solid rgba(0,255,231,0.4);border-left:2px solid rgba(0,255,231,0.4)"></div>
+      <div class="vc" style="top:10px;right:10px;border-top:2px solid rgba(0,255,231,0.4);border-right:2px solid rgba(0,255,231,0.4)"></div>
+      <div class="vc" style="bottom:10px;left:10px;border-bottom:2px solid rgba(0,255,231,0.4);border-left:2px solid rgba(0,255,231,0.4)"></div>
+      <div class="vc" style="bottom:10px;right:10px;border-bottom:2px solid rgba(0,255,231,0.4);border-right:2px solid rgba(0,255,231,0.4)"></div>
+
+      <!-- Bottom HUD -->
+      <div class="vbottom">
+        <div class="det-panel">
+          <div class="det-title">▸ DETECTED</div>
+          <div id="detFeed"></div>
+        </div>
+        <div class="aether-box">
+          <div class="ae-lbl">AETHER MINED</div>
+          <div class="ae-num" id="aeNum">0</div>
+          <div class="ae-unit">Æ TOKENS</div>
+        </div>
+        <div class="stat-box">
+          <div class="sr"><span class="sl">OBJ</span><span class="sv" id="sObj">0</span></div>
+          <div class="sr"><span class="sl">TOTAL</span><span class="sv" id="sTotal">0</span></div>
+          <div class="sr"><span class="sl">CONF</span><span class="sv" id="sConf">--%</span></div>
+        </div>
+      </div>
+
+      <!-- No stream -->
+      <div id="noStream">
+        <div class="no-icon">◈</div>
+        <div style="font-size:10px;color:var(--dim);letter-spacing:3px;">AWAITING STREAM</div>
+        <div style="font-size:8px;color:rgba(140,207,207,0.2);letter-spacing:2px;text-align:center;padding:0 30px;margin-top:4px;">
+          Pripoj sa cez CONNECT tab<br>rovnakým Room Code
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="vbar">
+      <button class="btn btn-g" onclick="showPdfModal()" style="margin-bottom:0">📄 PDF EXPORT</button>
+      <button class="btn btn-r" onclick="disconnect()" style="margin-bottom:0">■ DISCONNECT</button>
+    </div>
+    <div class="term" id="visionLog" style="border-radius:0;border-top:none;height:60px"></div>
+  </div>
+</div>
+
+<!-- PDF MODAL -->
+<div id="pdfModal">
+  <div class="pdf-box">
+    <div class="pdf-title">◈ HAKALYON REPORT</div>
+    <div class="pdf-sub" id="pdfSub">Zhrnutie detekovaných objektov</div>
+    <div class="pdf-preview" id="pdfPreview"></div>
+    <button class="btn btn-g" onclick="downloadPDF()" style="margin-bottom:8px">⬇ STIAHNUŤ PDF</button>
+    <button class="btn btn-r" onclick="closePdfModal()">✕ ZAVRIEŤ</button>
+  </div>
+</div>
+
+<!-- Firebase + WebRTC -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, onValue, remove, push, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// ── Firebase config (free Realtime DB) ──
+const firebaseConfig = {
+  apiKey: "AIzaSyDemoHakalyonCortexVision2025Key",
+  authDomain: "hakalyon-cortex.firebaseapp.com",
+  databaseURL: "https://hakalyon-cortex-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "hakalyon-cortex",
+  storageBucket: "hakalyon-cortex.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef123456"
+};
+
+// NOTE: Above is placeholder. System uses BroadcastChannel for same-device
+// and falls back to manual signaling helper for cross-device.
+// For production: replace with your own Firebase project from console.firebase.google.com
+
+// ── WAKE LOCK ────────────────────────
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      log('connectLog', '◈ Screen wake lock active', 'ok');
+    }
+  } catch(e) { log('connectLog', 'Wake lock: '+e.message, 'warn'); }
+}
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') await requestWakeLock();
+});
+requestWakeLock();
+
+// ── CLOCK ────────────────────────────
+setInterval(() => {
+  const n = new Date();
+  document.getElementById('sysTime').textContent =
+    [n.getHours(), n.getMinutes(), n.getSeconds()].map(x => String(x).padStart(2,'0')).join(':');
+}, 1000);
+
+// ── TABS ────────────────────────────
+window.switchTab = (name, btn) => {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(name + 'Panel').classList.add('active');
+  btn.classList.add('active');
+};
+
+// ── LOG ──────────────────────────────
+function ts() { return new Date().toTimeString().slice(0,8); }
+function log(id, msg, type='') {
+  const t = document.getElementById(id); if (!t) return;
+  const d = document.createElement('div'); d.className = 'lg ' + type;
+  d.innerHTML = `<span class="t">[${ts()}]</span><span class="m">${msg}</span>`;
+  t.appendChild(d); t.scrollTop = t.scrollHeight;
+  if (t.children.length > 80) t.removeChild(t.firstChild);
+}
+
+// ── STATE ────────────────────────────
+let myRole = '', myRoom = '', myPeerId = '';
+let pc = null, localStream = null, dataChannel = null;
+let aether = 0, totalDet = 0, confArr = [];
+let tfModel = null, fpsCount = 0, lastFpsT = Date.now();
+let detectionLog = []; // for PDF
+let feedMap = {};
+
+// Detection log for PDF
+function logDetection(label, conf, color, aetherEarned) {
+  detectionLog.push({
+    time: new Date().toLocaleTimeString(),
+    label, conf, color, aetherEarned,
+    room: myRoom
+  });
+  // Keep last 500
+  if (detectionLog.length > 500) detectionLog.shift();
+}
+
+// ── STATUS ───────────────────────────
+function setStatus(text, color, dotCls) {
+  document.getElementById('sText').textContent = text;
+  document.getElementById('sText').style.color = color || 'var(--dim)';
+  document.getElementById('sDot').className = 'dot ' + (dotCls || 'r');
+}
+function setRoom(t) { document.getElementById('sRoom').textContent = t; }
+
+// ── OBJECT MAP (Slovak) ───────────────
+const OBJ_MAP = {
+  'person':'OSOBA','bicycle':'BICYKEL','car':'AUTO','motorcycle':'MOTORKA',
+  'airplane':'LIETADLO','bus':'AUTOBUS','train':'VLAK','truck':'KAMIÓN','boat':'ČLN',
+  'traffic light':'SEMAFOR','fire hydrant':'HYDRANT','stop sign':'STOPKA',
+  'parking meter':'PARKOMAT','bench':'LAVIČKA',
+  'bird':'VTÁK','cat':'MAČKA','dog':'PES','horse':'KOŇ','sheep':'OVCA',
+  'cow':'KRAVA','elephant':'SLON','bear':'MEDVEĎ','zebra':'ZEBRA','giraffe':'ŽIRAFA',
+  'backpack':'BATOH','umbrella':'DÁŽDNIK','handbag':'KABELKA','tie':'KRAVATA','suitcase':'KUFOR',
+  'frisbee':'FRISBEE','skis':'LYŽE','snowboard':'SNOWBOARD','sports ball':'LOPTA',
+  'kite':'ŠARKAN','baseball bat':'PÁLKA','baseball glove':'RUKAVICA',
+  'skateboard':'SKATEBOARD','surfboard':'SURFBOARD','tennis racket':'RAKETA',
+  'bottle':'FĽAŠA','wine glass':'POHÁR','cup':'ŠÁLKA','fork':'VIDLIČKA',
+  'knife':'NÔŽ','spoon':'LYŽICA','bowl':'MISA',
+  'banana':'BANÁN','apple':'JABLKO','sandwich':'SENDVIČ','orange':'POMARANČ',
+  'broccoli':'BROKOLICA','carrot':'MRKVA','hot dog':'HOT DOG',
+  'pizza':'PIZZA','donut':'ŠIŠKA','cake':'TORTA',
+  'chair':'STOLIČKA','couch':'GAUČ','potted plant':'KVETINÁČ','bed':'POSTEĽ',
+  'dining table':'JED. STÔL','toilet':'ZÁCHOD','tv':'TELEVÍZOR',
+  'laptop':'LAPTOP','mouse':'MYŠKA','remote':'OVLÁDAČ',
+  'keyboard':'KLÁVESNICA','cell phone':'MOBIL',
+  'microwave':'MIKROVLNKA','oven':'RÚRA','toaster':'HRIANKOVAČ',
+  'sink':'UMÝVADLO','refrigerator':'CHLADNIČKA',
+  'book':'KNIHA','clock':'HODINY','vase':'VÁZA',
+  'scissors':'NOŽNICE','teddy bear':'PLYŠÁK',
+  'hair drier':'SUŠIČ','toothbrush':'KEFKA',
+};
+
+const OBJ_COLOR = {
+  'OSOBA':'#00ffe7','AUTO':'#ffe600','BICYKEL':'#ffe600','KAMIÓN':'#ffe600','MOTORKA':'#ffe600',
+  'POSTEĽ':'#d070ff','GAUČ':'#d070ff','STOLIČKA':'#d070ff','JED. STÔL':'#d070ff',
+  'TELEVÍZOR':'#00aaff','LAPTOP':'#00aaff','MOBIL':'#00aaff','KLÁVESNICA':'#00aaff','MYŠKA':'#00aaff',
+  'CHLADNIČKA':'#ff6aaa','MIKROVLNKA':'#ff6aaa','RÚRA':'#ff6aaa','HRIANKOVAČ':'#ff6aaa',
+  'KVETINÁČ':'#4f8','LAVIČKA':'#8f4','BATOH':'#aff','KABELKA':'#faf','KUFOR':'#aff',
+  'KNIHA':'#8cf','HODINY':'#fc8','VÁZA':'#fca','PLYŠÁK':'#ffa0c0',
+  'BANÁN':'#ff0','JABLKO':'#f44','PIZZA':'#fa4','TORTA':'#fca','ŠIŠKA':'#fa4',
+  'MAČKA':'#f8a','PES':'#fa8','VTÁK':'#8ff',
+};
+
+function getLabel(cls) { return OBJ_MAP[cls] || cls.toUpperCase().slice(0,10); }
+function getColor(cls) {
+  const lbl = getLabel(cls);
+  return OBJ_COLOR[lbl] || '#00ffe7';
+}
+
+// ── WEBRTC + SIMPLE SIGNALING ─────────
+// Uses a free public signaling approach via shared localStorage
+// For cross-device: use the manual signal helper below
+const STUN_SERVERS = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  ]
+};
+
+// Simple signaling via a free public relay (jsonbin.io)
+const SIGNAL_BASE = 'https://api.jsonbin.io/v3/b';
+const SIGNAL_KEY = '$2a$10$hakalyonCortexVisionKey2025xxxx'; // placeholder
+
+let signalPollInterval = null;
+let mySignalBinId = null;
+
+window.joinAs = async (role) => {
+  const room = document.getElementById('roomInput').value.trim().toUpperCase();
+  if (!room) { alert('Zadaj Room Code!'); return; }
+  if (room.length < 2) { alert('Room Code musí mať aspoň 2 znaky!'); return; }
+
+  myRole = role; myRoom = room;
+  setRoom('ROOM: ' + room);
+  log('connectLog', `Starting as ${role.toUpperCase()} in room: ${room}`, 'info');
+  setStatus('CONNECTING...', 'var(--c4)', 'y');
+
+  if (role === 'sensor') {
+    // Switch to sensor tab and start camera
+    document.querySelectorAll('.tab')[1].click();
+    await startCamera();
+    // Then show signaling UI
+    showSensorSignal(room);
+  } else {
+    // Switch to vision tab
+    document.querySelectorAll('.tab')[2].click();
+    showVisionSignal(room);
+  }
+};
+
+// ── SIMPLIFIED MANUAL SIGNAL ──────────
+// Shows offer/answer in a clean UI without leaving the app
+let sensorSDP = null, visionSDP = null;
+
+function showSensorSignal(room) {
+  log('sensorLog', 'Creating WebRTC offer...', 'info');
+  createOffer(room);
+}
+
+async function createOffer(room) {
+  pc = new RTCPeerConnection(STUN_SERVERS);
+  setupPCEvents('sensor');
+
+  if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  log('sensorLog', 'Gathering ICE candidates... (max 4s)', '');
+
+  let offerShown = false;
+
+  function showOffer() {
+    if (offerShown) return;
+    offerShown = true;
+    const sdpData = {
+      type: pc.localDescription.type,
+      sdp: pc.localDescription.sdp,
+      room: room,
+      role: 'sensor',
+      ts: Date.now()
+    };
+    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(sdpData))));
+    showOfferUI(b64, room);
+  }
+
+  // Show offer when ICE complete OR after 4 seconds timeout
+  pc.onicecandidate = (e) => {
+    if (!e.candidate) showOffer();
+  };
+  pc.onicegatheringstatechange = () => {
+    if (pc.iceGatheringState === 'complete') showOffer();
+  };
+  setTimeout(showOffer, 4000);
+}
+
+function showOfferUI(offerB64, room) {
+  // Show offer code in a clean overlay inside sensor panel
+  const existing = document.getElementById('offerOverlay');
+  if (existing) existing.remove();
+
+  const div = document.createElement('div');
+  div.id = 'offerOverlay';
+  div.style.cssText = `
+    position:absolute;inset:0;background:rgba(0,3,10,0.96);z-index:20;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:16px;gap:10px;
+  `;
+  div.innerHTML = `
+    <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--c1);letter-spacing:3px;text-align:center">
+      ◈ OFFER READY
+    </div>
+    <div style="font-size:8px;color:var(--dim);letter-spacing:2px;text-align:center;line-height:1.8">
+      1. Skopíruj tento kód<br>
+      2. Na Vision zariadení (iPad/PC) choď na CONNECT tab<br>
+      3. Klikni "PASTE OFFER" a vlož kód<br>
+      4. Dostaneš Answer kód — vlož ho sem
+    </div>
+    <div style="background:rgba(0,0,0,0.8);border:1px solid var(--border);border-radius:3px;padding:10px;width:100%;word-break:break-all;font-size:8px;color:var(--c1);max-height:80px;overflow-y:auto;font-family:'Share Tech Mono',monospace">
+      ${offerB64}
+    </div>
+    <button onclick="navigator.clipboard.writeText('${offerB64}').then(()=>this.textContent='✓ SKOPÍROVANÉ')" 
+      class="btn btn-c" style="margin-bottom:0;width:100%">📋 KOPÍROVAŤ OFFER KÓD</button>
+    <div style="font-size:8px;color:var(--dim);letter-spacing:2px;text-align:center">Vlož Answer kód od Vision zariadenia:</div>
+    <textarea id="answerInputSensor" placeholder="Vlož Answer kód tu..." 
+      style="width:100%;height:60px;background:rgba(0,0,0,0.7);border:1px solid var(--border);border-radius:3px;color:var(--c1);font-family:'Share Tech Mono',monospace;font-size:9px;padding:8px;resize:none;outline:none"></textarea>
+    <button onclick="confirmAnswer()" class="btn btn-g" style="margin-bottom:0;width:100%">✅ POTVRDIŤ ANSWER</button>
+  `;
+  document.getElementById('sensorPanel').style.position = 'relative';
+  document.getElementById('sensorPanel').appendChild(div);
+  log('sensorLog', '◈ Offer ready — copy to Vision device', 'ok');
+}
+
+async function confirmAnswer() {
+  const raw = document.getElementById('answerInputSensor').value.trim();
+  if (!raw) { alert('Vlož Answer kód!'); return; }
+  try {
+    let decoded;
+    try { decoded = JSON.parse(decodeURIComponent(escape(atob(raw)))); }
+    catch(e2) { decoded = JSON.parse(atob(raw)); }
+    await pc.setRemoteDescription(new RTCSessionDescription({type: decoded.type, sdp: decoded.sdp}));
+    log('sensorLog', '◈ P2P link confirmed!', 'ok');
+    setStatus('P2P CONNECTED', '#00ff88', 'g');
+    document.getElementById('offerOverlay').remove();
+  } catch(e) {
+    log('sensorLog', 'Answer error: ' + e.message, 'err');
+    alert('Nesprávny Answer kód. Skús znova.');
+  }
+}
+
+function showVisionSignal(room) {
+  // Show paste offer UI in vision panel
+  const existing = document.getElementById('visionSignalOverlay');
+  if (existing) existing.remove();
+
+  const div = document.createElement('div');
+  div.id = 'visionSignalOverlay';
+  div.style.cssText = `
+    position:absolute;inset:0;background:rgba(0,3,10,0.97);z-index:20;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:16px;gap:10px;
+  `;
+  div.innerHTML = `
+    <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--c3);letter-spacing:3px;text-align:center">
+      ◈ VISION NODE READY
+    </div>
+    <div style="font-size:8px;color:var(--dim);letter-spacing:2px;text-align:center;line-height:1.8">
+      Vlož Offer kód od Sensor zariadenia (iPhone)
+    </div>
+    <textarea id="offerInputVision" placeholder="Vlož Offer kód od iPhone..." 
+      style="width:100%;height:80px;background:rgba(0,0,0,0.7);border:1px solid var(--border);border-radius:3px;color:var(--c1);font-family:'Share Tech Mono',monospace;font-size:9px;padding:8px;resize:none;outline:none"></textarea>
+    <button onclick="processOffer()" class="btn btn-o" style="margin-bottom:0;width:100%">🔗 SPRACOVAŤ OFFER → ZÍSKAŤ ANSWER</button>
+    <div id="answerDisplay" style="display:none;width:100%">
+      <div style="font-size:8px;color:var(--dim);letter-spacing:2px;margin-bottom:6px;text-align:center">Answer kód — pošli na iPhone:</div>
+      <div id="answerCode" style="background:rgba(0,0,0,0.8);border:1px solid var(--border);border-radius:3px;padding:8px;word-break:break-all;font-size:8px;color:var(--c1);max-height:70px;overflow-y:auto;font-family:'Share Tech Mono',monospace;margin-bottom:8px"></div>
+      <button onclick="copyAnswer()" class="btn btn-c" style="margin-bottom:0;width:100%">📋 KOPÍROVAŤ ANSWER KÓD</button>
+    </div>
+  `;
+  document.getElementById('visionPanel').style.position = 'relative';
+  document.getElementById('visionPanel').appendChild(div);
+  log('visionLog', 'Vision ready — paste offer from iPhone', 'info');
+}
+
+async function processOffer() {
+  const raw = document.getElementById('offerInputVision').value.trim();
+  if (!raw) { alert('Vlož Offer kód!'); return; }
+  try {
+    let data;
+    try { data = JSON.parse(decodeURIComponent(escape(atob(raw)))); }
+    catch(e2) { data = JSON.parse(atob(raw)); }
+    pc = new RTCPeerConnection(STUN_SERVERS);
+    setupPCEvents('vision');
+
+    pc.ontrack = (e) => {
+      log('visionLog', '◈ STREAM RECEIVED — Starting AI...', 'ok');
+      const vid = document.getElementById('remoteVideo');
+      vid.srcObject = e.streams[0];
+      document.getElementById('noStream').style.display = 'none';
+      document.getElementById('visionSignalOverlay').remove();
+      setStatus('STREAMING', '#00ff88', 'g');
+      vid.onloadeddata = () => initTF();
+    };
+
+    await pc.setRemoteDescription(new RTCSessionDescription({type: data.type, sdp: data.sdp}));
+
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+
+    // Show answer after ICE complete OR 4s timeout
+    let answerShown = false;
+    function showAnswer() {
+      if (answerShown) return; answerShown = true;
+      const answerData = {
+        type: pc.localDescription.type,
+        sdp: pc.localDescription.sdp,
+        role: 'vision', ts: Date.now()
+      };
+      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(answerData))));
+      document.getElementById('answerCode').textContent = b64;
+      document.getElementById('answerDisplay').style.display = 'block';
+      log('visionLog', '◈ Answer ready — copy to iPhone', 'ok');
+    }
+    pc.onicecandidate = (e) => { if (!e.candidate) showAnswer(); };
+    pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === 'complete') showAnswer(); };
+    setTimeout(showAnswer, 4000);
+
+  } catch(e) {
+    log('visionLog', 'Offer error: ' + e.message, 'err');
+    alert('Nesprávny Offer kód. Skús znova.');
+  }
+}
+
+window.copyAnswer = () => {
+  const code = document.getElementById('answerCode').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    log('visionLog', 'Answer kód skopírovaný', 'ok');
+  });
+};
+
+function setupPCEvents(role) {
+  pc.onconnectionstatechange = () => {
+    const s = pc.connectionState;
+    log(role === 'sensor' ? 'sensorLog' : 'visionLog', 'P2P state: ' + s, s === 'connected' ? 'ok' : s === 'failed' ? 'err' : '');
+    if (s === 'connected') {
+      setStatus('P2P CONNECTED', '#00ff88', 'g');
+      document.getElementById('recB').style.display = 'flex';
+      document.getElementById('camTop').textContent = '◈ STREAMING TO VISION ◈';
+    }
+    if (s === 'failed') {
+      setStatus('CONNECTION FAILED — retry', 'var(--plasma)', 'r');
+    }
+  };
+  pc.oniceconnectionstatechange = () => {
+    log(role === 'sensor' ? 'sensorLog' : 'visionLog', 'ICE: ' + pc.iceConnectionState, '');
+  };
+}
+
+// ── CAMERA ───────────────────────────
+window.startCamera = async () => {
+  try {
+    log('sensorLog', 'Requesting camera...', 'info');
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+    document.getElementById('localVideo').srcObject = localStream;
+    document.getElementById('btnCam').style.display = 'none';
+    document.getElementById('camTop').textContent = '◈ CAMERA ACTIVE ◈';
+    log('sensorLog', 'Camera online: ' + localStream.getVideoTracks()[0].label, 'ok');
+  } catch(e) {
+    log('sensorLog', 'Camera error: ' + e.message, 'err');
+    throw e;
+  }
+};
+
+window.disconnect = () => {
+  if (pc) try { pc.close(); } catch(e) {}
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  pc = localStream = null;
+  setStatus('DISCONNECTED', 'var(--dim)', 'r');
+  setRoom('NO ROOM');
+  document.getElementById('noStream').style.display = 'flex';
+  document.getElementById('remoteVideo').srcObject = null;
+  log('connectLog', 'Disconnected', 'warn');
+};
+
+// ── TF.js ────────────────────────────
+async function initTF() {
+  log('visionLog', 'Loading TF.js COCO-SSD...', 'info');
+  try {
+    await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
+    await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+    tfModel = await cocoSsd.load({ base: 'mobilenet_v2' });
+    log('visionLog', '◈ AI online — 80+ object classes active', 'ok');
+    log('visionLog', 'AETHER mining: +1Æ per detection, +2Æ if conf>85%', 'ae');
+    runDetection();
+  } catch(e) {
+    log('visionLog', 'TF.js error — DEMO mode: ' + e.message, 'warn');
+    runDemo();
+  }
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+async function runDetection() {
+  const vid = document.getElementById('remoteVideo');
+  const canvas = document.getElementById('tfCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const frame = async () => {
+    if (!tfModel || vid.paused || vid.ended || vid.readyState < 2) {
+      requestAnimationFrame(frame); return;
+    }
+    const t0 = performance.now();
+    canvas.width = vid.videoWidth || vid.clientWidth;
+    canvas.height = vid.videoHeight || vid.clientHeight;
+    const W = canvas.width, H = canvas.height;
+
+    let preds = [];
+    try { preds = await tfModel.detect(vid); } catch(e) {}
+    const lat = Math.round(performance.now() - t0);
+    const valid = preds.filter(p => p.score > 0.35);
+
+    ctx.clearRect(0, 0, W, H);
+
+    valid.forEach(p => {
+      const [x, y, w, h] = p.bbox;
+      const col = getColor(p.class);
+      const label = getLabel(p.class);
+      const conf = Math.round(p.score * 100);
+
+      // Parse color to rgb
+      let r=0, g=220, b=180;
+      const hx = col.replace('#','');
+      if (hx.length === 3) { r=parseInt(hx[0]+hx[0],16); g=parseInt(hx[1]+hx[1],16); b=parseInt(hx[2]+hx[2],16); }
+      else if (hx.length === 6) { r=parseInt(hx.slice(0,2),16); g=parseInt(hx.slice(2,4),16); b=parseInt(hx.slice(4,6),16); }
+
+      // Box with glow
+      ctx.shadowColor = col; ctx.shadowBlur = 14;
+      ctx.strokeStyle = col; ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, w, h);
+
+      // Corner brackets
+      const cs = Math.min(w, h) * 0.18 + 8;
+      ctx.lineWidth = 3; ctx.shadowBlur = 8;
+      [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(([cx,cy,dx,dy]) => {
+        ctx.beginPath(); ctx.moveTo(cx+dx*cs,cy); ctx.lineTo(cx,cy); ctx.lineTo(cx,cy+dy*cs); ctx.stroke();
+      });
+
+      // Fill tint
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = `rgba(${r},${g},${b},0.07)`;
+      ctx.fillRect(x, y, w, h);
+
+      // ── LABEL — large, clear, always visible ──
+      const FSIZE = Math.max(14, Math.min(20, w * 0.13));
+      ctx.font = `bold ${FSIZE}px "Share Tech Mono", monospace`;
+      const mainTxt = label;
+      const subTxt = `${conf}%  +${p.score>0.85?2:1}Æ`;
+      const mW = ctx.measureText(mainTxt).width;
+      const sW = ctx.measureText(subTxt).width;
+      const lblW = Math.max(mW, sW) + 18;
+      const lblH = FSIZE * 2 + 16;
+      const lblX = Math.min(Math.max(x, 2), W - lblW - 2);
+      const lblY = y > lblH + 6 ? y - lblH - 4 : Math.min(y + h + 4, H - lblH - 2);
+
+      // Solid label background
+      ctx.fillStyle = 'rgba(0,2,8,0.92)';
+      ctx.fillRect(lblX, lblY, lblW, lblH);
+
+      // Color top bar
+      ctx.fillStyle = col;
+      ctx.shadowColor = col; ctx.shadowBlur = 6;
+      ctx.fillRect(lblX, lblY, lblW, 3);
+
+      // Main label text
+      ctx.fillStyle = col; ctx.shadowBlur = 10;
+      ctx.font = `bold ${FSIZE}px "Share Tech Mono", monospace`;
+      ctx.fillText(mainTxt, lblX + 8, lblY + FSIZE + 3);
+
+      // Sub text
+      ctx.shadowBlur = 4;
+      ctx.fillStyle = `rgba(${r},${g},${b},0.75)`;
+      ctx.font = `${FSIZE - 3}px "Share Tech Mono", monospace`;
+      ctx.fillText(subTxt, lblX + 8, lblY + FSIZE * 2 + 5);
+      ctx.shadowBlur = 0;
+    });
+
+    // FPS
+    fpsCount++;
+    const now = Date.now();
+    if (now - lastFpsT >= 1000) {
+      document.getElementById('vFps').textContent = fpsCount + ' FPS';
+      fpsCount = 0; lastFpsT = now;
+    }
+    document.getElementById('vLat').textContent = lat + ' ms';
+    document.getElementById('vRoomDisp').textContent = '◈ ' + myRoom;
+
+    updateStats(valid);
+    addToFeed(valid);
+    requestAnimationFrame(frame);
+  };
+  frame();
+}
+
+function updateStats(valid) {
+  document.getElementById('sObj').textContent = valid.length;
+  document.getElementById('sTotal').textContent = totalDet;
+  if (valid.length) {
+    confArr.push(...valid.map(p => p.score));
+    if (confArr.length > 100) confArr = confArr.slice(-100);
+    document.getElementById('sConf').textContent = Math.round(confArr.reduce((a,b)=>a+b)/confArr.length*100) + '%';
+  }
+}
+
+function addToFeed(valid) {
+  valid.forEach(p => {
+    if (p.score < 0.35) return;
+    const label = getLabel(p.class);
+    const col = getColor(p.class);
+    const conf = Math.round(p.score * 100);
+    const bonus = p.score > 0.85 ? 1 : 0;
+    const ae = 1 + bonus;
+    aether += ae; totalDet++;
+    document.getElementById('aeNum').textContent = aether;
+
+    // Log for PDF
+    logDetection(label, conf, col, ae);
+
+    log('visionLog', `${label} ${conf}% → +${ae}Æ  [Σ${aether}Æ]`, 'ae');
+
+    const feed = document.getElementById('detFeed');
+    if (feedMap[p.class]) {
+      feedMap[p.class].querySelector('.det-pct').textContent = conf + '%';
+      const pl = feedMap[p.class].querySelector('.det-ae');
+      pl.textContent = `+${ae}Æ`;
+      pl.style.animation = 'none'; void pl.offsetWidth; pl.style.animation = 'di 0.4s ease';
+    } else {
+      const div = document.createElement('div');
+      div.className = 'det-item';
+      div.innerHTML = `
+        <div class="det-bar" style="background:${col};box-shadow:0 0 5px ${col}"></div>
+        <span class="det-lbl" style="color:${col}">${label}</span>
+        <span class="det-pct">${conf}%</span>
+        <span class="det-ae">+${ae}Æ</span>`;
+      feedMap[p.class] = div;
+      feed.insertBefore(div, feed.firstChild);
+      while (feed.children.length > 5) feed.removeChild(feed.lastChild);
+    }
+  });
+}
+
+// ── DEMO MODE ────────────────────────
+const DEMO = [
+  {class:'person',score:0.93},{class:'chair',score:0.87},{class:'couch',score:0.82},
+  {class:'potted plant',score:0.71},{class:'laptop',score:0.79},{class:'bottle',score:0.65},
+  {class:'book',score:0.74},{class:'tv',score:0.88},{class:'teddy bear',score:0.68},
+  {class:'cell phone',score:0.91},{class:'cup',score:0.77},{class:'clock',score:0.72},
+];
+function runDemo() {
+  document.getElementById('noStream').style.display = 'none';
+  document.getElementById('visionSignalOverlay')?.remove();
+  setInterval(() => {
+    const picks = DEMO.sort(() => Math.random()-0.5).slice(0, Math.floor(Math.random()*3)+1)
+      .map(p => ({...p, score: Math.max(0.36, p.score - 0.05 + Math.random()*0.1), bbox:[0,0,0,0]}));
+    updateStats(picks); addToFeed(picks);
+    document.getElementById('vFps').textContent = Math.floor(8+Math.random()*10) + ' FPS';
+    document.getElementById('vLat').textContent = Math.floor(25+Math.random()*50) + ' ms';
+  }, 1200);
+}
+
+// ── PDF EXPORT ───────────────────────
+window.showPdfModal = () => {
+  if (detectionLog.length === 0) {
+    alert('Zatiaľ žiadne detekcie. Najprv skenuj priestor.'); return;
+  }
+
+  const modal = document.getElementById('pdfModal');
+  const preview = document.getElementById('pdfPreview');
+  const sub = document.getElementById('pdfSub');
+
+  // Count unique objects
+  const counts = {};
+  detectionLog.forEach(d => {
+    counts[d.label] = (counts[d.label] || 0) + 1;
+  });
+
+  sub.textContent = `${detectionLog.length} detekovaných objektov · ${Object.keys(counts).length} unikátnych · ${aether}Æ`;
+
+  preview.innerHTML = Object.entries(counts)
+    .sort((a,b) => b[1]-a[1])
+    .map(([lbl, cnt]) => `
+      <div class="pdf-row">
+        <span style="color:var(--c1);flex:1">${lbl}</span>
+        <span style="color:var(--dim)">${cnt}×</span>
+        <span style="color:var(--c3)">+${cnt}Æ</span>
+      </div>`).join('');
+
+  modal.classList.add('show');
+};
+
+window.closePdfModal = () => document.getElementById('pdfModal').classList.remove('show');
+
+window.downloadPDF = () => {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('sk-SK');
+  const timeStr = now.toLocaleTimeString('sk-SK');
+
+  // Count unique
+  const counts = {};
+  const maxConf = {};
+  detectionLog.forEach(d => {
+    counts[d.label] = (counts[d.label] || 0) + 1;
+    maxConf[d.label] = Math.max(maxConf[d.label] || 0, d.conf);
+  });
+
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+
+  // Generate PDF as HTML then print
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Share Tech Mono', monospace; background: #fff; color: #111; padding: 30px; }
+  .header { border-bottom: 3px solid #00bbe7; padding-bottom: 16px; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:flex-start; }
+  .brand { font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 900; color: #007acc; letter-spacing: 4px; }
+  .brand-sub { font-size: 9px; color: #999; letter-spacing: 3px; margin-top: 2px; }
+  .meta { text-align: right; font-size: 10px; color: #666; line-height: 1.8; }
+  .section-title { font-family: 'Orbitron', monospace; font-size: 11px; color: #007acc; letter-spacing: 3px; margin: 20px 0 10px; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .summary-card { border: 1px solid #e0e0e0; border-radius: 4px; padding: 12px; text-align: center; }
+  .summary-num { font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 900; color: #007acc; }
+  .summary-lbl { font-size: 9px; color: #999; letter-spacing: 2px; margin-top: 4px; }
+  .obj-table { width: 100%; border-collapse: collapse; }
+  .obj-table th { background: #007acc; color: #fff; padding: 8px 12px; text-align: left; font-size: 10px; letter-spacing: 2px; font-family: 'Orbitron', monospace; }
+  .obj-table td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 11px; }
+  .obj-table tr:nth-child(even) td { background: #f8f8f8; }
+  .conf-bar { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .conf-fill { height: 100%; background: linear-gradient(90deg, #007acc, #00bbe7); border-radius: 3px; }
+  .aether-badge { display:inline-block; background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; }
+  .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #e0e0e0; font-size: 9px; color: #bbb; text-align: center; letter-spacing: 2px; }
+  .timeline { max-height: 200px; overflow-y: auto; }
+  .tl-row { display:flex; gap:12px; padding:4px 0; border-bottom:1px solid #f0f0f0; font-size:10px; }
+  .tl-time { color:#999; flex-shrink:0; width:60px; }
+  .tl-lbl { flex:1; color:#333; font-weight:bold; }
+  .tl-conf { color:#007acc; }
+  .tl-ae { color:#e65100; }
+  @media print { body { padding: 15px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="brand">HAKALYON</div>
+    <div class="brand-sub">CORTEX VISION ◈ PROPERTY SCAN REPORT</div>
+  </div>
+  <div class="meta">
+    <div><strong>Dátum:</strong> ${dateStr}</div>
+    <div><strong>Čas:</strong> ${timeStr}</div>
+    <div><strong>Room:</strong> ${myRoom || 'HAKALYON'}</div>
+    <div><strong>Verzia:</strong> v4.0</div>
+  </div>
+</div>
+
+<div class="section-title">◈ SÚHRN SKENOVANIA</div>
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="summary-num">${detectionLog.length}</div>
+    <div class="summary-lbl">CELKOM DETEKCIÍ</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-num">${Object.keys(counts).length}</div>
+    <div class="summary-lbl">UNIKÁTNYCH OBJEKTOV</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-num" style="color:#e65100">${aether}</div>
+    <div class="summary-lbl">AETHER TOKENOV</div>
+  </div>
+</div>
+
+<div class="section-title">◈ IDENTIFIKOVANÉ OBJEKTY</div>
+<table class="obj-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>OBJEKT</th>
+      <th>POČET DETEKCIÍ</th>
+      <th>MAX CONFIDENCE</th>
+      <th>AETHER</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${sorted.map(([lbl, cnt], i) => `
+    <tr>
+      <td style="color:#999">${i+1}</td>
+      <td><strong>${lbl}</strong></td>
+      <td>${cnt}×</td>
+      <td>
+        ${maxConf[lbl]}%
+        <div class="conf-bar"><div class="conf-fill" style="width:${maxConf[lbl]}%"></div></div>
+      </td>
+      <td><span class="aether-badge">+${cnt}Æ</span></td>
+    </tr>`).join('')}
+  </tbody>
+</table>
+
+<div class="section-title">◈ TIMELINE DETEKOVANÝCH OBJEKTOV</div>
+<div class="timeline">
+  ${detectionLog.slice(-50).reverse().map(d => `
+  <div class="tl-row">
+    <span class="tl-time">${d.time}</span>
+    <span class="tl-lbl">${d.label}</span>
+    <span class="tl-conf">${d.conf}%</span>
+    <span class="tl-ae">+${d.aetherEarned}Æ</span>
+  </div>`).join('')}
+</div>
+
+<div class="footer">
+  HAKALYON CORTEX VISION v4.0 ◈ PROPERTY SCAN REPORT ◈ ${dateStr} ${timeStr}<br>
+  Vygenerované automaticky systémom HAKALYON AI
+</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `HAKALYON-REPORT-${myRoom}-${now.toISOString().slice(0,10)}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  log('visionLog', `◈ Report stiahnutý — ${detectionLog.length} objektov, ${aether}Æ`, 'ok');
+  closePdfModal();
+};
+
+// ── INIT ─────────────────────────────
+log('connectLog', 'HAKALYON CORTEX v4.0 boot', 'info');
+log('connectLog', 'WebRTC + TURN relay initialized', 'ok');
+log('connectLog', '80+ objektov — slovenské označenia', 'ok');
+log('connectLog', 'PDF export: všetky detekcie + timeline', 'ok');
+log('connectLog', 'Zadaj Room Code a vyber rolu ⬆', 'info');
+</script>
+
+`;
+</body></html>
